@@ -22,6 +22,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 
 const notifications = [
     {
@@ -49,6 +51,13 @@ const notifications = [
 
 export function HeaderActions({ className }: { className?: string }) {
     const [unreadCount, setUnreadCount] = useState(notifications.filter(n => n.unread).length)
+    const router = useRouter()
+    const supabase = createClient()
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut()
+        router.replace('/')
+    }
 
     return (
         <div className={cn("flex items-center gap-2", className)}>
@@ -113,8 +122,8 @@ export function HeaderActions({ className }: { className?: string }) {
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                         <Avatar className="h-9 w-9">
-                            <AvatarImage src="/avatars/01.png" alt="@shadcn" />
-                            <AvatarFallback>AD</AvatarFallback>
+                            <AvatarImage src="/avatars/01.png" alt="@admin" />
+                            <AvatarFallback className="bg-secondary text-secondary-foreground">AD</AvatarFallback>
                         </Avatar>
                     </Button>
                 </DropdownMenuTrigger>
@@ -143,7 +152,7 @@ export function HeaderActions({ className }: { className?: string }) {
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive">
+                    <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4 cursor-pointer" />
                         <span>Log out</span>
                     </DropdownMenuItem>
