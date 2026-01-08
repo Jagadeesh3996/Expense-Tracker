@@ -122,7 +122,6 @@ export function HeaderActions({ className }: { className?: string }) {
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                         <Avatar className="h-9 w-9">
-                            <AvatarImage src="/avatars/01.png" alt="@admin" />
                             <AvatarFallback className="bg-secondary text-secondary-foreground">AD</AvatarFallback>
                         </Avatar>
                     </Button>
