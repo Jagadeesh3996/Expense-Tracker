@@ -33,6 +33,8 @@ import {
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
+import { toast } from "sonner"
+
 export function NavUser({
   user,
 }: {
@@ -48,6 +50,7 @@ export function NavUser({
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
+    toast.success("Logged out successfully")
     router.replace('/')
   }
 

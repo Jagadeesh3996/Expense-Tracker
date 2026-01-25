@@ -1,7 +1,5 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
 export async function signup(prevState: any, formData: FormData) {
@@ -16,10 +14,10 @@ export async function signup(prevState: any, formData: FormData) {
     const name = rawName.trim()
 
     const fields = {
-        email: rawEmail,
-        password: rawPassword,
-        'confirm-password': rawConfirmPassword,
-        name: rawName
+        email: email,
+        password: password,
+        'confirm-password': confirmPassword,
+        name: name
     }
 
     if (!email || !password || !confirmPassword || !name) {
@@ -52,13 +50,12 @@ export async function signup(prevState: any, formData: FormData) {
 
     // specific check for existing user when email enumeration protection is enabled
     if (user && user.identities && user.identities.length === 0) {
-        return { error: 'User already exists', fields }
+        return { error: 'Email already exists', fields }
     }
 
     // checks for existing user when email enumeration protection is disabled (Supabase returns error above)
     // or if the session is null, it might require email confirmation, but usually implies success in creation or fake success.
     // If we want to be strict about 'email exists', the identities check is the key.
 
-    revalidatePath('/', 'layout')
-    redirect('/')
+    return { success: true }
 }

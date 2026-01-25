@@ -20,11 +20,13 @@ import { Input } from "@/components/ui/input"
 import { signup } from "@/app/signup/actions"
 import { useActionState, useEffect, useState } from "react"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const router = useRouter()
   const [state, formAction, isPending] = useActionState(signup, null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -33,7 +35,13 @@ export function SignupForm({
     if (state?.error) {
       toast.error(state.error)
     }
-  }, [state])
+    if (state?.success) {
+      toast.success("Verification mail sent successfully!", {
+        description: "Please verify your email before logging in."
+      })
+      router.push('/')
+    }
+  }, [state, router])
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>

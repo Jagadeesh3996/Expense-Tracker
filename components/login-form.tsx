@@ -18,14 +18,28 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { login } from "@/app/login/actions"
-import { useActionState, useState } from "react"
+import { useActionState, useEffect, useState } from "react"
+import { toast } from "sonner"
+
+import { useRouter } from "next/navigation"
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const router = useRouter()
   const [state, formAction, isPending] = useActionState(login, null)
   const [showPassword, setShowPassword] = useState(false)
+
+  useEffect(() => {
+    if (state?.error) {
+      toast.error(state.error)
+    }
+    if (state?.success) {
+      toast.success("Login successful")
+      router.push("/dashboard")
+    }
+  }, [state, router])
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -113,11 +127,7 @@ export function LoginForm({
                 </div>
               </Field>
               <Field>
-                {state?.error && (
-                  <div className="text-sm text-red-500 font-medium">
-                    {state.error}
-                  </div>
-                )}
+
                 <Button type="submit" disabled={isPending}>
                   {isPending ? "Logging in..." : "Login"}
                 </Button>
