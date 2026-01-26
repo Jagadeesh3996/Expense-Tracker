@@ -1,24 +1,38 @@
----
-trigger: always_on
----
 
 ├── app
-│   ├── dashboard
-│   │   └── page.tsx
 │   ├── favicon.ico
 │   ├── globals.css
 │   ├── layout.tsx
 │   ├── login
+│   │   ├── actions.ts
 │   │   └── page.tsx
-│   └── page.tsx
+│   ├── master
+│   │   ├── categories
+│   │   │   └── page.tsx
+│   │   └── payment-modes
+│   │       └── page.tsx
+│   ├── page.tsx
+│   ├── report
+│   │   └── page.tsx
+│   ├── signup
+│   │   ├── actions.ts
+│   │   └── page.tsx
+│   ├── transactions
+│   │   └── page.tsx
 ├── components
 │   ├── app-sidebar.tsx
+│   ├── dynamic-breadcrumbs.tsx
 │   ├── header-actions.tsx
 │   ├── login-form.tsx
 │   ├── mode-toggle.tsx
 │   ├── nav-main.tsx
 │   ├── nav-projects.tsx
 │   ├── nav-user.tsx
+│   ├── categories
+│   │   └── category-list.tsx
+│   ├── payment-modes
+│   │   └── payment-mode-list.tsx
+│   ├── signup-form.tsx
 │   ├── team-switcher.tsx
 │   ├── theme-provider.tsx
 │   └── ui
@@ -28,6 +42,7 @@ trigger: always_on
 │       ├── button.tsx
 │       ├── card.tsx
 │       ├── collapsible.tsx
+│       ├── dialog.tsx
 │       ├── dropdown-menu.tsx
 │       ├── field.tsx
 │       ├── input.tsx
@@ -38,12 +53,17 @@ trigger: always_on
 │       ├── sheet.tsx
 │       ├── sidebar.tsx
 │       ├── skeleton.tsx
+│       ├── sonner.tsx
+│       ├── table.tsx
 │       └── tooltip.tsx
 ├── components.json
 ├── eslint.config.mjs
 ├── hooks
 │   └── use-mobile.ts
 ├── lib
+│   ├── supabase
+│   │   ├── client.ts
+│   │   └── server.ts
 │   └── utils.ts
 ├── next.config.ts
 ├── next-env.d.ts
@@ -59,4 +79,4 @@ trigger: always_on
 ├── README.md
 └── tsconfig.json
 
-9 directories, 48 files
+12 directories, 66 files

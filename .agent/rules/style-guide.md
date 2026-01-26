@@ -2,4 +2,5 @@
 trigger: always_on
 ---
 
-include cursor-pointer for all future actionable triggers and will ensure it is applied in all subsequent components I create.2
+1. Include `cursor-pointer` for all actionable triggers (buttons, links, interactive elements) in all components.
+2. **Responsiveness Mandate**: Whenever new UI is created or existing UI is modified, you MUST verify and ensure it is fully responsive across all screen sizes (Mobile, Tablet, Desktop). Use Tailwind's responsive prefixes (`md:`, `lg:`, `xl:`) to handle layout changes gracefully.

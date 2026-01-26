@@ -17,6 +17,11 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -52,6 +57,7 @@ const notifications = [
 export function HeaderActions({ className }: { className?: string }) {
     const [user, setUser] = useState<{ email?: string; user_metadata?: { name?: string } } | null>(null)
     const [unreadCount, setUnreadCount] = useState(notifications.filter(n => n.unread).length)
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
     const router = useRouter()
     const supabase = createClient()
 
@@ -75,20 +81,27 @@ export function HeaderActions({ className }: { className?: string }) {
     return (
         <div className={cn("flex items-center gap-2", className)}>
             {/* Notifications Popover */}
-            <Popover>
-                <PopoverTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative h-9 w-9">
-                        <Bell className="h-5 w-5 cursor-pointer" />
-                        {unreadCount > 0 && (
-                            <Badge
-                                variant="destructive"
-                                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
-                            >
-                                {unreadCount}
-                            </Badge>
-                        )}
-                    </Button>
-                </PopoverTrigger>
+            <Popover open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" size="icon" className="relative h-9 w-9 bg-white dark:bg-transparent">
+                                <Bell className="h-5 w-5 cursor-pointer" />
+                                {unreadCount > 0 && (
+                                    <Badge
+                                        variant="destructive"
+                                        className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]"
+                                    >
+                                        {unreadCount}
+                                    </Badge>
+                                )}
+                            </Button>
+                        </PopoverTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Notifications</p>
+                    </TooltipContent>
+                </Tooltip>
                 <PopoverContent align="end" className="w-80 p-0">
                     <div className="flex items-center justify-between border-b px-4 py-3">
                         <h4 className="text-sm font-semibold">Notifications</h4>
@@ -133,9 +146,9 @@ export function HeaderActions({ className }: { className?: string }) {
             {/* User Profiles Dropdown */}
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                    <Button variant="outline" className="group relative h-9 w-9 rounded-full bg-white dark:bg-transparent">
                         <Avatar className="h-9 w-9">
-                            <AvatarFallback className="bg-secondary text-secondary-foreground">{initials}</AvatarFallback>
+                            <AvatarFallback className="bg-transparent text-black group-hover:text-white dark:text-foreground">{initials}</AvatarFallback>
                         </Avatar>
                     </Button>
                 </DropdownMenuTrigger>

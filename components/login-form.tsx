@@ -37,7 +37,7 @@ export function LoginForm({
     }
     if (state?.success) {
       toast.success("Login successful")
-      router.push("/dashboard")
+      router.push("/transactions")
     }
   }, [state, router])
 

@@ -39,14 +39,20 @@ export function NavUser({
   user,
 }: {
   user: {
-    name: string
-    email: string
-    avatar: string
-  }
+    name?: string;
+    email: string;
+    avatar: string;
+    user_metadata?: {
+      full_name?: string;
+    };
+  };
 }) {
   const { isMobile } = useSidebar()
   const router = useRouter()
   const supabase = createClient()
+
+  const displayName = user.user_metadata?.full_name || user.name || user.email.split('@')[0];
+  const displayInitial = displayName.charAt(0).toUpperCase() || "U";
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -64,11 +70,11 @@ export function NavUser({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">{user.name?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
+                <AvatarImage src={user.avatar} alt={displayName} />
+                <AvatarFallback className="rounded-lg">{displayInitial}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate font-medium">{displayName}</span>
                 <span className="truncate text-xs">{user.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4 cursor-pointer" />
@@ -83,11 +89,11 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">{user.name?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
+                  <AvatarImage src={user.avatar} alt={displayName} />
+                  <AvatarFallback className="rounded-lg">{displayInitial}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate font-medium">{displayName}</span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
               </div>

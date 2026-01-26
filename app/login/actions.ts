@@ -28,8 +28,6 @@ export async function login(prevState: any, formData: FormData) {
         return { error: error.message, fields }
     }
 
-    // revalidatePath('/', 'layout')
-    // redirect('/dashboard')
     return { success: true }
 }
 
