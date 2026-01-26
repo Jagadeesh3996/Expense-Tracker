@@ -64,8 +64,8 @@ const data = {
   ],
   projects: [
     {
-      name: "Mode of Payment",
-      url: "#",
+      name: "Payment Modes",
+      url: "/master/payment-modes",
       icon: CreditCard,
     },
     {
