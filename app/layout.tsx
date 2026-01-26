@@ -38,6 +38,12 @@ export const metadata: Metadata = {
   description: "Varamio ERP",
 };
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -69,9 +75,19 @@ export default async function RootLayout({
           <SidebarProvider>
             <AppSidebar user={userData} />
             <SidebarInset>
-              <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b">
+              <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
                 <div className="flex items-center gap-2 px-4 w-full">
-                  <SidebarTrigger className="-ml-1 cursor-pointer" />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <SidebarTrigger className="-ml-1 cursor-pointer" />
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" align="start">
+                      Toggle Sidebar (Ctrl+B)
+                    </TooltipContent>
+                  </Tooltip>
+                  <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-2 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:inline-flex">
+                    <span className="text-xs">Ctrl+B</span>
+                  </kbd>
                   <Separator
                     orientation="vertical"
                     className="mr-2 data-[orientation=vertical]:h-4"

@@ -9,6 +9,8 @@
 │   │   ├── actions.ts
 │   │   └── page.tsx
 │   ├── master
+│   │   ├── categories
+│   │   │   └── page.tsx
 │   │   └── payment-modes
 │   │       └── page.tsx
 │   ├── page.tsx
@@ -28,6 +30,8 @@
 │   ├── nav-main.tsx
 │   ├── nav-projects.tsx
 │   ├── nav-user.tsx
+│   ├── categories
+│   │   └── category-list.tsx
 │   ├── payment-modes
 │   │   └── payment-mode-list.tsx
 │   ├── signup-form.tsx

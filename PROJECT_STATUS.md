@@ -52,20 +52,30 @@
   - `ModeToggle`: Dark/Light theme switcher
   - `Breadcrumb`: Dynamic breadcrumb navigation (currently shows placeholder text)
 - **Dashboard Content**:
-  - **Payment Modes Card**: Shows real-time count of user's payment modes
-  - Currently has placeholder `div`s for remaining slots
-  - Detailed analytics pending implementation
+  - **Payment Modes Card**: Shows live count of payment modes, links to module
+  - **Categories Card**: Pending implementation (placeholder active)
+  - Layout: Compact `h-32` cards for better aesthetics
 
 ### Master Module ✅
 - **Payment Modes**:
   - Route: `/master/payment-modes`
-  - Component: `components/payment-modes/payment-mode-list.tsx`
-  - Features:
-    - List all payment modes
-    - Add new mode (with duplicate validation)
-    - Edit existing mode
-    - Delete mode
-    - Responsive Table UI with card layout
+  - Features: List, Add, Edit, Delete, Duplicate check
+- **Categories**:
+  - Route: `/master/categories`
+  - Component: `components/categories/category-list.tsx`
+  - Features: CRUD operations matching Payment Modes
+
+### UI Improvements ✅
+- **Header**:
+  - Removed border (`border-b`) for seamless look
+  - **Shortcuts**: Added visual hints for Sidebar (`Ctrl+B`) and Theme (`Ctrl+Shift+L`)
+  - **Styling**: 
+    - Theme & User icons: White background in light mode, transparent in dark
+    - Notification icon: Consistent styling with tooltip
+    - User Avatar: Black initial in light mode, turns white on hover
+- **Sidebar**:
+  - Renamed "Category" to "Categories" in navigation
+  - Shortcut support `Ctrl+B` with bottom tooltip
 
 ### UI Components ✅
 - **Shadcn UI Library** (`components/ui/`):

@@ -69,8 +69,8 @@ const data = {
       icon: CreditCard,
     },
     {
-      name: "Category",
-      url: "#",
+      name: "Categories",
+      url: "/master/categories",
       icon: Tag,
     },
   ],

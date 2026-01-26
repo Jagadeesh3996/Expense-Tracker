@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CreditCard } from "lucide-react";
 
@@ -10,7 +11,10 @@ export default async function Page() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
       <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-        <div className="group relative flex flex-col justify-between overflow-hidden rounded-xl bg-white p-5 shadow-sm transition-all hover:shadow-md dark:bg-muted/50 dark:shadow-none h-32 cursor-pointer border border-transparent hover:border-blue-100 dark:hover:border-blue-900/50">
+        <Link
+          href="/master/payment-modes"
+          className="group relative flex flex-col justify-between overflow-hidden rounded-xl bg-white p-5 shadow-sm transition-all hover:shadow-md dark:bg-muted/50 dark:shadow-none h-32 cursor-pointer border border-transparent hover:border-blue-100 dark:hover:border-blue-900/50"
+        >
           <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl transition-all group-hover:bg-blue-500/20" />
 
           <div className="relative z-10 flex items-center justify-between">
@@ -26,7 +30,7 @@ export default async function Page() {
               Total active methods
             </p>
           </div>
-        </div>
+        </Link>
         <div className="rounded-xl bg-white dark:bg-muted/50 h-32" />
         <div className="rounded-xl bg-white dark:bg-muted/50 h-32" />
       </div>
