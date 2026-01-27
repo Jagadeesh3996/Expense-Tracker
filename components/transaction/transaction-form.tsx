@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { CalendarIcon, Loader2, Plus, Save } from "lucide-react"
 import { format } from "date-fns"
@@ -28,6 +28,8 @@ import { Textarea } from "@/components/ui/textarea"
 interface Category {
     id: number
     name: string
+    type: "income" | "expense"
+    status: "active" | "inactive"
 }
 
 interface PaymentMode {
@@ -62,7 +64,7 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
                 // Fetch Categories
                 const { data: catData, error: catError } = await supabase
                     .from("categories")
-                    .select("id, name")
+                    .select("id, name, type, status")
                     .order("name")
 
                 if (catError) throw catError
@@ -87,6 +89,23 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
 
         fetchData()
     }, [])
+
+    // Filter categories based on selected type and active status
+    const filteredCategories = useMemo(() => {
+        // Reset category selection if the current one is no longer valid
+        // But we handle this effect separately to avoid infinite loops or clearing on initial load if valid
+        return categories.filter(cat => cat.type === type && cat.status === "active");
+    }, [categories, type]);
+
+    // Clear category selection when type changes if the selected category doesn't match the new type
+    useEffect(() => {
+        if (categoryId) {
+            const selectedCat = categories.find(c => c.id.toString() === categoryId);
+            if (selectedCat && selectedCat.type !== type) {
+                setCategoryId("");
+            }
+        }
+    }, [type, categories, categoryId]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -231,11 +250,17 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
                                 <SelectValue placeholder={loadingMedia ? "Loading..." : "Select Category"} />
                             </SelectTrigger>
                             <SelectContent>
-                                {categories.map((cat) => (
-                                    <SelectItem key={cat.id} value={cat.id.toString()} className="cursor-pointer">
-                                        {cat.name}
+                                {filteredCategories.length === 0 ? (
+                                    <SelectItem value="none" disabled>
+                                        No active categories found
                                     </SelectItem>
-                                ))}
+                                ) : (
+                                    filteredCategories.map((cat) => (
+                                        <SelectItem key={cat.id} value={cat.id.toString()} className="cursor-pointer">
+                                            {cat.name}
+                                        </SelectItem>
+                                    ))
+                                )}
                             </SelectContent>
                         </Select>
                     </div>
