@@ -1,26 +1,36 @@
 
+├── .agent
+│   ├── rules
+│   │   ├── file-structure.md
+│   │   ├── nextjs-rules.md
+│   │   ├── style-guide.md
+│   │   └── supabase-info.md
 ├── app
+│   ├── (main)
+│   │   ├── layout.tsx
+│   │   ├── master
+│   │   │   ├── categories
+│   │   │   │   └── page.tsx
+│   │   │   └── payment-modes
+│   │   │       └── page.tsx
+│   │   ├── report
+│   │   │   └── page.tsx
+│   │   └── transactions
+│   │       └── page.tsx
 │   ├── favicon.ico
 │   ├── globals.css
 │   ├── layout.tsx
 │   ├── login
 │   │   ├── actions.ts
 │   │   └── page.tsx
-│   ├── master
-│   │   ├── categories
-│   │   │   └── page.tsx
-│   │   └── payment-modes
-│   │       └── page.tsx
+│   ├── not-found.tsx
 │   ├── page.tsx
-│   ├── report
-│   │   └── page.tsx
 │   ├── signup
 │   │   ├── actions.ts
 │   │   └── page.tsx
-│   ├── transactions
-│   │   └── page.tsx
 ├── components
 │   ├── app-sidebar.tsx
+│   ├── dashboard-wrapper.tsx
 │   ├── dynamic-breadcrumbs.tsx
 │   ├── header-actions.tsx
 │   ├── login-form.tsx
@@ -35,6 +45,9 @@
 │   ├── signup-form.tsx
 │   ├── team-switcher.tsx
 │   ├── theme-provider.tsx
+│   ├── transaction
+│   │   ├── transaction-form.tsx
+│   │   └── transaction-list.tsx
 │   └── ui
 │       ├── avatar.tsx
 │       ├── badge.tsx
@@ -70,6 +83,7 @@
 ├── package.json
 ├── package-lock.json
 ├── postcss.config.mjs
+├── proxy.ts
 ├── public
 │   ├── file.svg
 │   ├── globe.svg
@@ -79,4 +93,4 @@
 ├── README.md
 └── tsconfig.json
 
-12 directories, 66 files
+13 directories, 71 files

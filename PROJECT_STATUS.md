@@ -28,16 +28,17 @@
   - Form validation (email normalization, password matching, min 6 chars)
   - Session management with 2-session limit per user (database trigger)
   - Logout functionality (implemented in `nav-user.tsx`)
-  - Route protection via `proxy.ts` (acts as middleware)
+  - Route protection via `proxy.ts` (Next.js 16 standard)
 - **Route Protection**:
-  - `proxy.ts`: Middleware that protects `/transactions`, `/report`, and `/master` routes
+  - `proxy.ts`: URL Proxy/Middleware that protects `/transactions`, `/report`, and `/master` routes (replaces generic `middleware.ts` in Next.js 16)
   - Redirects unauthenticated users from protected routes to `/`
   - Redirects authenticated users from `/` or `/login` to `/transactions`
   - Redirects `/login` to `/` (login form is on home page)
 
 ### Main Layout Structure ✅
-- **Layout**: Sidebar layout using `AppSidebar` component
+- **Layout**: Sidebar layout using `DashboardWrapper` component (wraps `AppSidebar`)
 - **Components**:
+  - `DashboardWrapper`: Orchestrates Sidebar, Header, and Breadcrumbs
   - `AppSidebar`: Main navigation sidebar (collapsible, icon mode)
   - `NavMain`: Main menu items:
     - Transactions (`/transactions`)
@@ -46,14 +47,14 @@
     - Payment Modes (`/master/payment-modes`)
     - Categories (`/master/categories`)
   - `NavUser`: User profile menu (bottom of sidebar)
-    - *Dynamic: Accepts user data from `layout.tsx` or page props*
+    - *Dynamic: Accepts user data from `app/(main)/layout.tsx`*
     - Shows user name, email, avatar
     - Logout functionality implemented
   - `TeamSwitcher`: Dropdown to switch teams
     - *Current state: Hardcoded "ERP" team by Varamio*
   - `HeaderActions`: Custom actions component in the header
   - `ModeToggle`: Dark/Light theme switcher
-  - `Breadcrumb`: Dynamic breadcrumb navigation
+  - `Breadcrumb`: Dynamic breadcrumb navigation (`DynamicBreadcrumbs` component)
 
 ### Master Module ✅
 - **Payment Modes**:
@@ -71,8 +72,8 @@
   - Linked to Categories/Payment Modes with `ON DELETE CASCADE`
   - RLS Policies enabled
 - **UI Components**:
-  - `TransactionForm`: Horizontal layout, date picker, search-enabled dropdowns (Select), validation.
-  - `TransactionList`: Searchable table, delete with confirmation alert, income/expense color coding.
+  - `TransactionForm` (`components/transaction/transaction-form.tsx`): Horizontal layout, date picker, search-enabled dropdowns (Select), validation.
+  - `TransactionList` (`components/transaction/transaction-list.tsx`): Searchable table, delete with confirmation alert, income/expense color coding.
 
 ### UI Improvements ✅
 - **Header**:
@@ -85,13 +86,14 @@
 - **Sidebar**:
   - Renamed "Category" to "Categories" in navigation
   - Shortcut support `Ctrl+B` with bottom tooltip
+- **404 Page**:
+  - Custom `not-found.tsx` with animation and "Back to Home" button.
 
 ### UI Components ✅
 - **Shadcn UI Library** (`components/ui/`):
   - Button, Input, Card, Avatar, Badge
   - Sidebar, Dropdown Menu, Popover, Tooltip
   - Breadcrumb, Separator, Scroll Area, Sheet
-  - Skeleton, Sonner (toast notifications)
   - Skeleton, Sonner (toast notifications)
   - Field, Label, Collapsible
   - Dialog, Table
@@ -115,19 +117,23 @@
 ### `app/`
 - `layout.tsx`: Root layout with `ThemeProvider`, `Toaster` (sonner), and font configuration
 - `page.tsx`: Home entry point, shows Login form with "Varamio Technologies" branding
-- `transactions/page.tsx`: Main Application entry point
-  - Renders `TransactionList` component
-- `report/page.tsx`: Reports page (Placeholder)
+- `not-found.tsx`: Custom 404 error page
 - `login/actions.ts`: Server action for login (`login`, `signout`)
-- `signup/actions.ts`: Server action for signup with validation
 - `signup/actions.ts`: Server action for signup with validation
 - `signup/page.tsx`: Signup page with "Varamio Technologies" branding
 
-### `app/master/`
-- `payment-modes/page.tsx`: Payment Modes management page
+### `app/(main)/` (Main App Group)
+- `layout.tsx`: Main app layout using `DashboardWrapper`
+- `transactions/page.tsx`: Transactions page
+  - Renders `TransactionList` component
+- `report/page.tsx`: Reports page (Placeholder)
+- `master/`
+  - `payment-modes/page.tsx`: Payment Modes management page
+  - `categories/page.tsx`: Categories management page
 
 ### `components/`
 - **Layout Components**:
+  - `dashboard-wrapper.tsx`: Wrapper for Sidebar + Header layout
   - `app-sidebar.tsx`: Main sidebar with transactions and report navigation
   - `nav-main.tsx`: Main navigation menu renderer
   - `nav-projects.tsx`: Master data list renderer
@@ -136,10 +142,14 @@
   - `header-actions.tsx`: Header action buttons
   - `mode-toggle.tsx`: Theme switcher
   - `theme-provider.tsx`: Theme context provider
+  - `dynamic-breadcrumbs.tsx`: Breadcrumb component
 - **Feature Components**:
-  - `login-form.tsx`: Login form with email/password, password visibility toggle
-  - `login-form.tsx`: Login form with email/password, password visibility toggle
-  - `signup-form.tsx`: Signup form with full validation
+  - `login-form.tsx`: Login form
+  - `signup-form.tsx`: Signup form
+  - `transaction/`:
+    - `transaction-form.tsx`: Form for adding transactions
+    - `transaction-list.tsx`: List view of transactions
+  - `categories/category-list.tsx`: Categories CRUD component
   - `payment-modes/payment-mode-list.tsx`: Payment modes CRUD component
 - **UI Library** (`components/ui/`): Complete Shadcn component set
 
@@ -149,7 +159,7 @@
 - `utils.ts`: Utility functions (includes `cn` for className merging)
 
 ### Root Files
-- `proxy.ts`: Route protection middleware (should be `middleware.ts` for Next.js convention)
+- `proxy.ts`: Route protection (Next.js 16 standard replacement for middleware.ts)
 - `next.config.ts`: Next.js configuration (minimal)
 - `tsconfig.json`: TypeScript configuration
 - `package.json`: Dependencies and scripts
@@ -168,7 +178,7 @@
 1. User visits `/` → sees LoginForm
 2. User submits login → `app/login/actions.ts` → Supabase auth
 3. On success → redirects to `/transactions`
-4. `proxy.ts` middleware checks auth on every request
+4. `proxy.ts` checks auth on every request
 5. User is redirected to `/transactions` if authenticated
 
 ### Signup Flow
@@ -185,22 +195,19 @@
 ## TODO / Next Steps
 
 ### High Priority
-### High Priority
 1. **Dynamic Navigation**: Centralize navigation logic
-2. **Report Module**: Implement `app/report/page.tsx` content
+2. **Report Module**: Implement `app/(main)/report/page.tsx` content
 3. **Google OAuth**: Implement Google OAuth login (buttons exist but not functional)
-4. **Middleware Naming**: Consider renaming `proxy.ts` to `middleware.ts` for Next.js convention
 
 ### Medium Priority
-5. **Profile Management**: Connect `NavUser` menu items (Account, Billing, Notifications) to real functionality
-6. **Team Management**: Make `TeamSwitcher` functional with real team data
-7. **Breadcrumb**: Make breadcrumb navigation dynamic based on current route
-8. **Form Improvements**: Add "Forgot password" functionality
+4. **Profile Management**: Connect `NavUser` menu items (Account, Billing, Notifications) to real functionality
+5. **Team Management**: Make `TeamSwitcher` functional with real team data
+6. **Form Improvements**: Add "Forgot password" functionality
 
 ### Low Priority
-9. **Error Handling**: Enhance error messages and handling
-10. **Loading States**: Add more loading states and skeletons
-11. **Accessibility**: Audit and improve accessibility features
+7. **Error Handling**: Enhance error messages and handling
+8. **Loading States**: Add more loading states and skeletons
+9. **Accessibility**: Audit and improve accessibility features
 
 ## Important Notes
 
@@ -222,20 +229,6 @@
 ## Current Limitations
 
 1. **Navigation Data**: All navigation items are hardcoded sample data
-2. **Dashboard Content**: No real content, only placeholders
+2. **Report Content**: No real content, only placeholders
 3. **OAuth**: Google OAuth buttons exist but not implemented
-4. **Middleware**: `proxy.ts` exists but Next.js convention expects `middleware.ts`
-5. **User Profile**: Profile menu items are placeholders (Account, Billing, etc.)
-
-## Working Features ✅
-
-- ✅ Complete authentication system (login/signup/logout)
-- ✅ Protected routes with middleware
-- ✅ Session management with 2-session limit
-- ✅ Dark/Light theme switching
-- ✅ Responsive sidebar layout
-- ✅ Toast notifications
-- ✅ Form validation
-- ✅ User data display in sidebar
-- ✅ Email normalization in forms
-- ✅ Payment Modes Management (CRUD + Validation)
+4. **User Profile**: Profile menu items are placeholders (Account, Billing, etc.)
