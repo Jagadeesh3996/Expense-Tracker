@@ -13,6 +13,7 @@ Stores user-defined payment methods (e.g., Cash, Credit Card, UPI). This table i
 | `created_on` | `timestamptz` | | `now()` | Timestamp when the record was created. |
 | `updated_on` | `timestamptz` | | `now()` | Timestamp when the record was last updated. Automatically managed by trigger. |
 | `user_id` | `uuid` | **FK** | `auth.uid()` | ID of the user who owns this payment mode. References `auth.users`. |
+| `status` | `text` | | `'active'` | Status: 'active' or 'inactive'. |
 
 ### Constraints & Indexes
 
@@ -79,11 +80,16 @@ Stores user-defined categories (e.g., Food, Travel). This table is user-specific
 | `created_on` | `timestamptz` | | `now()` | Timestamp when the record was created. |
 | `updated_on` | `timestamptz` | | `now()` | Timestamp when the record was last updated. Automatically managed by trigger. |
 | `user_id` | `uuid` | **FK** | `auth.uid()` | ID of the user who owns this category. References `auth.users`. |
+| `type` | `text` | | `'expense'` | Category type: 'income' or 'expense'. |
+| `status` | `text` | | `'active'` | Category status: 'active' or 'inactive'. |
 
 ### Constraints & Indexes
 
 *   **Primary Key**: `id`
 *   **Foreign Key**: `user_id` -> `auth.users(id)` (On Delete Cascade)
+*   **Check Constraints**:
+    *   `type IN ('income', 'expense')`
+    *   `status IN ('active', 'inactive')`
 *   **Unique Constraint**: `(user_id, name)` - Ensures a user cannot have duplicate category names.
 
 ### Security (Row Level Security)

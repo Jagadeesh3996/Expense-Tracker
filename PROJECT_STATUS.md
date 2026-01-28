@@ -59,11 +59,20 @@
 ### Master Module ✅
 - **Payment Modes**:
   - Route: `/master/payment-modes`
-  - Features: List, Add, Edit, Delete, Duplicate check
+  - Features: 
+    - Advanced Data Table with Sorting and Searching
+    - Status Management (Active/Inactive toggle)
+    - Add, Edit, Delete with "In Use" protection
+    - Optimized UI with consistent alignment (Name Left, Status Center, Actions Right)
+    - **Schema Update**: Added `status` column (default: 'active')
 - **Categories**:
   - Route: `/master/categories`
   - Component: `components/categories/category-list.tsx`
-  - Features: CRUD operations matching Payment Modes
+  - Features:
+    - Mirrored design of Payment Modes for consistency
+    - Full Sort/Search capabilities
+    - Status Lifecycle Management
+    - Delete protection if used in transactions
 
 ### Transaction Module ✅
 - **Route**: `/transactions` (Main Entry)
