@@ -2,7 +2,7 @@
 
 ## Project Overview
 **Name**: Varamio ERP (Common ERP)
-**Framework**: Next.js 16.1.1 (App Router)
+**Framework**: Next.js 16.1.6 (App Router)
 **Language**: TypeScript
 **Styling**: Tailwind CSS 4 (via `@tailwindcss/postcss`)
 **Component Library**: Shadcn UI (Radix UI primitives)
@@ -228,8 +228,8 @@
 ### Technical Details
 - **Supabase MCP**: Connected to Supabase MCP server (reference in `.agent/rules/supabase-info.md`)
 - **Next.js DevTools**: DevTools MCP is initialized
-- **React Version**: React 19.2.3
-- **Next.js Version**: 16.1.1 (App Router)
+- **React Version**: React 19.2.4
+- **Next.js Version**: 16.1.6 (App Router)
 
 ### Environment Variables Required
 - `NEXT_PUBLIC_SUPABASE_URL`: Supabase project URL
