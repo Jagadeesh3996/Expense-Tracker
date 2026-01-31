@@ -37,6 +37,7 @@ interface Transaction {
     type: "income" | "expense"
     category: { name: string } | null
     payment_mode: { mode: string } | null
+    bank_account: { bank_name: string } | null
     description: string | null
     created_on: string
 }
@@ -67,7 +68,8 @@ export function TransactionList() {
                     description,
                     created_on,
                     category:categories(name),
-                    payment_mode:payment_modes(mode)
+                    payment_mode:payment_modes(mode),
+                    bank_account:bank_details(bank_name)
                 `)
                 .order("transaction_date", { ascending: false })
                 .order("created_on", { ascending: false })
@@ -79,7 +81,8 @@ export function TransactionList() {
             const formattedData = (data || []).map(item => ({
                 ...item,
                 category: Array.isArray(item.category) ? item.category[0] : item.category,
-                payment_mode: Array.isArray(item.payment_mode) ? item.payment_mode[0] : item.payment_mode
+                payment_mode: Array.isArray(item.payment_mode) ? item.payment_mode[0] : item.payment_mode,
+                bank_account: Array.isArray(item.bank_account) ? item.bank_account[0] : item.bank_account
             })) as Transaction[]
 
             setTransactions(formattedData)
@@ -118,7 +121,8 @@ export function TransactionList() {
 
     const filteredTransactions = transactions.filter(t =>
         (t.description?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-        (t.category?.name?.toLowerCase() || "").includes(searchTerm.toLowerCase())
+        (t.category?.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+        (t.bank_account?.bank_name?.toLowerCase() || "").includes(searchTerm.toLowerCase())
     )
 
     return (
@@ -137,10 +141,11 @@ export function TransactionList() {
                     <div className="relative w-64">
                         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Search description or category..."
+                            placeholder="Search, category or bank..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="pl-8"
+                            type="search"
                         />
                     </div>
                 </div>
@@ -152,7 +157,7 @@ export function TransactionList() {
                                 <TableHead>Date</TableHead>
                                 <TableHead>Type</TableHead>
                                 <TableHead>Category</TableHead>
-                                <TableHead>Mode</TableHead>
+                                <TableHead>Mode & Bank</TableHead>
                                 <TableHead className="w-[300px]">Description</TableHead>
                                 <TableHead className="text-right">Amount</TableHead>
                                 <TableHead className="w-[50px]"></TableHead>
@@ -193,7 +198,14 @@ export function TransactionList() {
                                             </div>
                                         </TableCell>
                                         <TableCell>{t.category?.name || "—"}</TableCell>
-                                        <TableCell>{t.payment_mode?.mode || "—"}</TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <span className="font-medium">{t.payment_mode?.mode || "—"}</span>
+                                                {t.bank_account && (
+                                                    <span className="text-xs text-muted-foreground">{t.bank_account.bank_name}</span>
+                                                )}
+                                            </div>
+                                        </TableCell>
                                         <TableCell className="max-w-[300px] truncate text-muted-foreground">
                                             {t.description || "—"}
                                         </TableCell>

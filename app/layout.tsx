@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Varamio ERP",
-  description: "Varamio ERP",
+  title: "Expense Tracker",
+  description: "Expense Tracker by Varamio Technologies",
 };
 
 export default function RootLayout({
