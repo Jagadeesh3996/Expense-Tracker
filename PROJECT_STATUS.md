@@ -1,7 +1,7 @@
 # Project Status & Memory
 
 ## Project Overview
-**Name**: Varamio ERP (Common ERP)
+**Name**: Expense Tracker
 **Framework**: Next.js 16.1.6 (App Router)
 **Language**: TypeScript
 **Styling**: Tailwind CSS 4 (via `@tailwindcss/postcss`)
@@ -51,7 +51,7 @@
     - Shows user name, email, avatar
     - Logout functionality implemented
   - `TeamSwitcher`: Dropdown to switch teams
-    - *Current state: Hardcoded "ERP" team by Varamio*
+    - *Current state: Hardcoded "Expense Tracker" team by Varamio*
   - `HeaderActions`: Custom actions component in the header
   - `ModeToggle`: Dark/Light theme switcher
   - `Breadcrumb`: Dynamic breadcrumb navigation (`DynamicBreadcrumbs` component)

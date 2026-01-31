@@ -97,3 +97,28 @@ Stores user-defined categories (e.g., Food, Travel). This table is user-specific
 *   **RLS Enabled**: Yes
 *   **Policy**: "Users can manage their own categories"
     *   **Permissive**: Users can `SELECT`, `INSERT`, `UPDATE`, `DELETE` rows where `user_id` matches their authenticated ID.
+
+## Table: `bank_details`
+
+Stores user's bank account information.
+
+### Columns
+
+| Name | Type | Key | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `id` | `bigint` | **PK** | *Identity (Auto)* | Unique identifier. |
+| `bank_name` | `text` | | | Name of the bank (e.g., HDFC). Required. |
+| `holder_name` | `text` | | | Name of the account holder. Required. |
+| `account_number` | `text` | | | Account number. Optional. |
+| `ifsc_code` | `text` | | | IFSC Code. Optional. |
+| `branch` | `text` | | | Branch Name. Optional. |
+| `status` | `text` | | `'active'` | Status: 'active' or 'inactive'. |
+| `user_id` | `uuid` | **FK** | `auth.uid()` | Owner of the record. |
+| `created_on` | `timestamptz` | | `now()` | Creation timestamp. |
+| `updated_on` | `timestamptz` | | `now()` | Last update timestamp. |
+
+### Constraints & Indexes
+*   **Primary Key**: `id`
+*   **Foreign Key**: `user_id` -> `auth.users(id)` (On Delete Cascade)
+*   **Check Constraints**: `status IN ('active', 'inactive')`
+*   **RLS**: Users can manage their own bank details.

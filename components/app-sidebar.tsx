@@ -17,6 +17,7 @@ import {
   Receipt,
   BarChart,
   SquareChartGantt,
+  Landmark,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -40,7 +41,7 @@ const data = {
   },
   teams: [
     {
-      name: "ERP",
+      name: "Expense Tracker",
       logo: GalleryVerticalEnd,
       plan: "by varamio",
     },
@@ -67,6 +68,11 @@ const data = {
       name: "Categories",
       url: "/master/categories",
       icon: Tag,
+    },
+    {
+      name: "Bank Details",
+      url: "/master/bank-details",
+      icon: Landmark,
     },
   ],
 }
