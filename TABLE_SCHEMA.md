@@ -41,6 +41,7 @@ Stores the core financial records (Income and Expenses).
 | `type` | `text` | | | Either 'income' or 'expense'. |
 | `category_id` | `bigint` | **FK** | | References `categories(id)`. Cannot delete category if used (RESTRICT). |
 | `payment_mode_id` | `bigint` | **FK** | | References `payment_modes(id)`. Cannot delete mode if used (RESTRICT). |
+| `bank_account_id` | `bigint` | **FK** | `NULL` | Optional. References `bank_details(id)`. |
 | `description` | `text` | | `NULL` | Optional notes about the transaction. |
 | `created_on` | `timestamptz` | | `now()` | Record creation timestamp. |
 | `updated_on` | `timestamptz` | | `now()` | Last update timestamp (auto-managed). |
@@ -122,3 +123,27 @@ Stores user's bank account information.
 *   **Foreign Key**: `user_id` -> `auth.users(id)` (On Delete Cascade)
 *   **Check Constraints**: `status IN ('active', 'inactive')`
 *   **RLS**: Users can manage their own bank details.
+
+---
+
+## Table: `user_profiles`
+Stores extended user information, subscription status, and roles.
+
+### Columns
+| Column Name | Data Type | Constraints | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `user_id` | `uuid` | **PK, FK** | | References `auth.users(id)`. 1:1 relationship. |
+| `role` | `text` | `NOT NULL` | `'user'` | Role: 'user' or 'admin'. |
+| `status` | `text` | `NOT NULL` | `'active'` | Status: 'active', 'inactive', 'suspended', 'past_due'. |
+| `active_plan` | `text` | `NOT NULL` | `'free'` | Name of the current subscription plan. |
+| `verified_on` | `timestamptz` | | `NULL` | Timestamp of email verification. |
+| `plan_expire_on` | `timestamptz` | | `NULL` | Date when the current plan expires. |
+| `created_on` | `timestamptz` | `NOT NULL` | `now()` | Record creation timestamp. |
+| `updated_on` | `timestamptz` | `NOT NULL` | `now()` | Last update timestamp. |
+
+### Policies (RLS)
+*   **Users can view own profile**: `auth.uid() = user_id`.
+
+### Triggers
+1.  **`on_auth_user_created`**: Automatically inserts a row into `user_profiles` when a new user signs up in `auth.users`.
+2.  **`on_auth_user_verified`**: Watches `auth.users` for verification. When verified, updates `verified_on` and sets `plan_expire_on` to **3 months** from verification date.

@@ -37,6 +37,13 @@ interface PaymentMode {
     mode: string
 }
 
+interface BankAccount {
+    id: number
+    bank_name: string
+    holder_name: string
+    account_number: string | null
+}
+
 interface TransactionFormProps {
     onSuccess: () => void
 }
@@ -47,11 +54,13 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
     const [type, setType] = useState<"income" | "expense">("expense")
     const [categoryId, setCategoryId] = useState("")
     const [paymentModeId, setPaymentModeId] = useState("")
+    const [bankAccountId, setBankAccountId] = useState<string>("none")
     const [description, setDescription] = useState("")
     const [processing, setProcessing] = useState(false)
 
     const [categories, setCategories] = useState<Category[]>([])
     const [paymentModes, setPaymentModes] = useState<PaymentMode[]>([])
+    const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([])
     const [loadingMedia, setLoadingMedia] = useState(true)
 
     const supabase = createClient()
@@ -78,6 +87,16 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
 
                 if (modeError) throw modeError
                 setPaymentModes(modeData || [])
+
+                // Fetch Bank Accounts
+                const { data: bankData, error: bankError } = await supabase
+                    .from("bank_details")
+                    .select("id, bank_name, holder_name, account_number")
+                    .eq("status", "active")
+                    .order("bank_name")
+
+                if (bankError) throw bankError
+                setBankAccounts(bankData || [])
 
             } catch (error) {
                 console.error("Error fetching master data:", error)
@@ -137,6 +156,7 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
                 type,
                 category_id: parseInt(categoryId),
                 payment_mode_id: parseInt(paymentModeId),
+                bank_account_id: bankAccountId && bankAccountId !== "none" ? parseInt(bankAccountId) : null,
                 description: description.trim() || null
             }
 
@@ -164,9 +184,11 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
     }
 
     return (
-        <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-4">
-            <form onSubmit={handleSubmit}>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+        <div className="rounded-xl border bg-card text-card-foreground shadow-sm p-4 md:p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+
+                {/* Main Grid: Inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
 
                     {/* Date Picker */}
                     <div className="flex flex-col gap-2">
@@ -201,12 +223,12 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
                     {/* Type Selector */}
                     <div className="flex flex-col gap-2">
                         <Label>Type</Label>
-                        <div className="flex rounded-md shadow-sm">
+                        <div className="flex rounded-md shadow-sm h-10">
                             <Button
                                 type="button"
                                 variant={type === "income" ? "default" : "outline"}
                                 className={cn(
-                                    "w-1/2 rounded-r-none focus:z-10 cursor-pointer",
+                                    "w-1/2 rounded-r-none focus:z-10 cursor-pointer h-full",
                                     type === "income" ? "bg-green-600 hover:bg-green-700" : ""
                                 )}
                                 onClick={() => setType("income")}
@@ -217,7 +239,7 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
                                 type="button"
                                 variant={type === "expense" ? "default" : "outline"}
                                 className={cn(
-                                    "w-1/2 rounded-l-none focus:z-10 cursor-pointer",
+                                    "w-1/2 rounded-l-none focus:z-10 cursor-pointer h-full",
                                     type === "expense" ? "bg-red-600 hover:bg-red-700" : ""
                                 )}
                                 onClick={() => setType("expense")}
@@ -282,26 +304,45 @@ export function TransactionForm({ onSuccess }: TransactionFormProps) {
                         </Select>
                     </div>
 
-                    {/* Submit Button */}
-                    <Button type="submit" disabled={processing || loadingMedia} className="cursor-pointer">
+                    {/* Bank Account (Optional) */}
+                    <div className="flex flex-col gap-2">
+                        <Label>Bank (Optional)</Label>
+                        <Select value={bankAccountId} onValueChange={setBankAccountId} disabled={loadingMedia}>
+                            <SelectTrigger className="cursor-pointer">
+                                <SelectValue placeholder={loadingMedia ? "Loading..." : "Select Bank"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none" className="cursor-pointer text-muted-foreground">None</SelectItem>
+                                {bankAccounts.map((bank) => (
+                                    <SelectItem key={bank.id} value={bank.id.toString()} className="cursor-pointer">
+                                        {bank.bank_name} - {bank.holder_name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Description - Spans 2 cols on Desktop */}
+                    <div className="flex flex-col gap-2 sm:col-span-2">
+                        <Label htmlFor="description">Description (Optional)</Label>
+                        <Input
+                            id="description"
+                            placeholder="What was this for?"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                        />
+                    </div>
+                </div>
+
+                {/* Footer: Submit Action */}
+                <div className="flex items-center justify-end pt-2 border-t mt-4">
+                    <Button type="submit" disabled={processing || loadingMedia} className="cursor-pointer w-full sm:w-auto min-w-[150px]">
                         {processing ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                            <><Plus className="mr-2 h-4 w-4" /> Add</>
+                            <><Plus className="mr-2 h-4 w-4" /> Add Transaction</>
                         )}
                     </Button>
-
-                </div>
-
-                {/* Description (Full Width row) */}
-                <div className="mt-4 flex flex-col gap-2">
-                    <Label htmlFor="description">Description (Optional)</Label>
-                    <Input
-                        id="description"
-                        placeholder="What was this for?"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                    />
                 </div>
             </form>
         </div>

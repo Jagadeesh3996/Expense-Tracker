@@ -173,13 +173,22 @@ export function BankList() {
         try {
             setProcessing(true)
 
+            // Get current user
+            const { data: { user } } = await supabase.auth.getUser()
+
+            if (!user) {
+                toast.error("You must be logged in to manage bank details")
+                return
+            }
+
             const payload = {
                 bank_name: formData.bank_name.trim(),
                 holder_name: formData.holder_name.trim(),
                 account_number: formData.account_number.trim() || null,
                 ifsc_code: formData.ifsc_code.trim() || null,
                 branch: formData.branch.trim() || null,
-                status: formData.status
+                status: formData.status,
+                user_id: user.id
             }
 
             if (editingBank) {
