@@ -123,6 +123,10 @@
   - **Audit Logging** (New):
     - `audit_logs` table tracks all user life-cycle events and data changes.
     - Triggers implemented for Registration, Login, Deletion, and Data/Transaction modifications.
+- **Infrastructure Hardening** (New):
+  - **Security**: Secured search paths for all database functions.
+  - **Performance**: Indexed all foreign keys and optimized RLS policies with `(SELECT auth.uid())` for scalability.
+  - **Production Sync**: Created a consolidated migration file (`supabase/migrations/migration.sql`) for dev-to-prod deployment.
 
 ## File Structure Details
 
@@ -138,7 +142,7 @@
 - `layout.tsx`: Main app layout using `DashboardWrapper`
 - `transactions/page.tsx`: Transactions page
   - Renders `TransactionList` component
-- `report/page.tsx`: Reports page (Placeholder)
+- `report/page.tsx`: Reports page with dynamic **This Month Expense** summary card linking to transactions.
 - `master/`
   - `payment-modes/page.tsx`: Payment Modes management page
   - `categories/page.tsx`: Categories management page
@@ -208,8 +212,7 @@
 
 ### High Priority
 1. **Dynamic Navigation**: Centralize navigation logic
-2. **Report Module**: Implement `app/(main)/report/page.tsx` content
-3. **Google OAuth**: Implement Google OAuth login (buttons exist but not functional)
+2. **Google OAuth**: Implement Google OAuth login (buttons exist but not functional)
 
 ### Medium Priority
 4. **Profile Management**: Connect `NavUser` menu items (Account, Billing, Notifications) to real functionality
@@ -241,6 +244,5 @@
 ## Current Limitations
 
 1. **Navigation Data**: All navigation items are hardcoded sample data
-2. **Report Content**: No real content, only placeholders
-3. **OAuth**: Google OAuth buttons exist but not implemented
-4. **User Profile**: Profile menu items are placeholders (Account, Billing, etc.)
+2. **OAuth**: Google OAuth buttons exist but not implemented
+3. **User Profile**: Profile menu items are placeholders (Account, Billing, etc.)
