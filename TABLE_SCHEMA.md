@@ -20,12 +20,14 @@ Stores user-defined payment methods (e.g., Cash, Credit Card, UPI). This table i
 *   **Primary Key**: `id`
 *   **Foreign Key**: `user_id` -> `auth.users(id)` (On Delete Cascade)
 *   **Unique Constraint**: `(user_id, mode)` - Ensures a user cannot have duplicate payment mode names.
+*   **Indexes**:
+    *   `payment_modes_user_mode_key`: Composite index for unique mode names per user and RLS performance.
 
 ### Security (Row Level Security)
 
 *   **RLS Enabled**: Yes
 *   **Policy**: "Users can manage own payment modes"
-    *   **Permissive**: Users can `SELECT`, `INSERT`, `UPDATE`, `DELETE` rows where `user_id` matches their authenticated ID.
+    *   **Permissive**: Full CRUD access for own data (`user_id = (SELECT auth.uid())`). Optimized for performance.
 
 ## Table: `transactions`
 
@@ -59,14 +61,16 @@ Stores the core financial records (Income and Expenses).
     *   `type IN ('income', 'expense')`
 *   **Indexes**:
     *   `user_id` (Security performance)
-    *   `transaction_date` (Reporting performance)
-    *   `category_id`, `payment_mode_id` (Join performance)
+    *   `transactions_date_idx`: Reporting performance on `transaction_date`.
+    *   `transactions_category_id_idx`, `transactions_payment_mode_id_idx`: Join performance.
+    *   `transactions_user_id_idx`: Optimized for RLS on `user_id`.
+    *   `idx_transactions_bank_account_id`: Speed up bank account joins.
 
 ### Security (Row Level Security)
 
 *   **RLS Enabled**: Yes
 *   **Policy**: "Users can manage their own transactions"
-    *   **Permissive**: Full CRUD access for own data (`user_id = auth.uid()`).
+    *   **Permissive**: Full CRUD access for own data (`user_id = (SELECT auth.uid())`). Optimized for performance.
 
 ## Table: `categories`
 
@@ -92,12 +96,14 @@ Stores user-defined categories (e.g., Food, Travel). This table is user-specific
     *   `type IN ('income', 'expense')`
     *   `status IN ('active', 'inactive')`
 *   **Unique Constraint**: `(user_id, name)` - Ensures a user cannot have duplicate category names.
+*   **Indexes**:
+    *   `idx_categories_user_id`: Supports RLS performance.
 
 ### Security (Row Level Security)
 
 *   **RLS Enabled**: Yes
 *   **Policy**: "Users can manage their own categories"
-    *   **Permissive**: Users can `SELECT`, `INSERT`, `UPDATE`, `DELETE` rows where `user_id` matches their authenticated ID.
+    *   **Permissive**: Full CRUD access for own data (`user_id = (SELECT auth.uid())`). Optimized for performance.
 
 ## Table: `bank_details`
 
@@ -122,7 +128,9 @@ Stores user's bank account information.
 *   **Primary Key**: `id`
 *   **Foreign Key**: `user_id` -> `auth.users(id)` (On Delete Cascade)
 *   **Check Constraints**: `status IN ('active', 'inactive')`
-*   **RLS**: Users can manage their own bank details.
+*   **Indexes**:
+    *   `idx_bank_details_user_id`: Supports RLS performance.
+*   **Security (RLS)**: Users can manage their own bank details (`user_id = (SELECT auth.uid())`).
 
 ---
 
@@ -147,3 +155,27 @@ Stores extended user information, subscription status, and roles.
 ### Triggers
 1.  **`on_auth_user_created`**: Automatically inserts a row into `user_profiles` when a new user signs up in `auth.users`.
 2.  **`on_auth_user_verified`**: Watches `auth.users` for verification. When verified, updates `verified_on` and sets `plan_expire_on` to **3 months** from verification date.
+
+---
+
+## Table: `audit_logs`
+
+Centralized audit logging for compliance and history tracking.
+
+### Columns
+
+| Name | Type | Key | Default | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `id` | `bigint` | **PK** | *Identity* | Unique Log ID. |
+| `user_id` | `uuid` | | `NULL` | User who performed the action. Nullable to persist logs if user is deleted. |
+| `target_user_email` | `text` | | | Snapshot of user email for identification. |
+| `action` | `text` | | | Event type (e.g., `USER_REGISTERED`, `DELETE`, `LOGIN`). |
+| `entity` | `text` | | | The table or component involved (e.g., `transactions`). |
+| `details` | `jsonb` | | `'{}` | JSON object containing old/new values. |
+| `ip_address` | `text` | | | IP Address (if available). |
+| `created_at` | `timestamptz` | | `now()` | Timestamp of the event. |
+
+### Configured Triggers
+*   **`on_auth_user_audit`**: Logs `USER_REGISTERED` and `USER_DELETED`.
+*   **`on_auth_session_audit`**: Logs `USER_LOGIN`.
+*   **`audit_transactions`, `audit_categories`, ...**: Logs all `INSERT`, `UPDATE`, `DELETE` operations on core data tables.
