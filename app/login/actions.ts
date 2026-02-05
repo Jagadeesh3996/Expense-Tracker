@@ -34,6 +34,28 @@ export async function login(prevState: any, formData: FormData) {
 // Note: Session limits (max 2 per user) are enforced by a database trigger.
 // See supabase/migrations/20260108_limit_user_sessions.sql
 
+export async function signInWithGoogle() {
+    const supabase = await createClient()
+    const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
+            queryParams: {
+                access_type: 'offline',
+                prompt: 'consent',
+            },
+        },
+    })
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    if (data.url) {
+        redirect(data.url)
+    }
+}
+
 export async function signout() {
     const supabase = await createClient()
     await supabase.auth.signOut()
