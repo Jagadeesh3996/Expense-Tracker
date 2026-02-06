@@ -1,14 +1,21 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useMemo, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { format } from "date-fns"
-import { Trash, ArrowUpCircle, ArrowDownCircle, Search } from "lucide-react"
+import { Trash, ArrowUpCircle, ArrowDownCircle, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import {
     Table,
     TableBody,
@@ -28,7 +35,6 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
-import { TransactionForm } from "@/components/transaction/transaction-form"
 
 interface Transaction {
     id: number
@@ -42,23 +48,49 @@ interface Transaction {
     created_on: string
 }
 
-export function TransactionList() {
-    const [transactions, setTransactions] = useState<Transaction[]>([])
-    const [loading, setLoading] = useState(true)
+interface TransactionListProps {
+    refreshTrigger?: number
+    defaultLimit?: number
+    initialData?: Transaction[]
+    initialCount?: number
+}
+
+export function TransactionList({
+    refreshTrigger,
+    defaultLimit = 10,
+    initialData = [],
+    initialCount = 0
+}: TransactionListProps) {
+    const [transactions, setTransactions] = useState<Transaction[]>(initialData)
+    const [loading, setLoading] = useState(initialData.length === 0)
+    const [paging, setPaging] = useState(false)
     const [deleteId, setDeleteId] = useState<number | null>(null)
     const [searchTerm, setSearchTerm] = useState("")
+    const [totalCount, setTotalCount] = useState(initialCount)
+    const [currentPage, setCurrentPage] = useState(1)
+    const [limit, setLimit] = useState(defaultLimit)
 
-    // Pagination (Simple limit for now, can extend)
-    const [limit] = useState(50)
+    // Use a ref to store the current state for stable callback references
+    const stateRef = useRef({ currentPage, limit })
+    stateRef.current = { currentPage, limit } // Update ref on each render
 
     const supabase = createClient()
 
-    const fetchTransactions = useCallback(async () => {
-        try {
-            setLoading(true)
+    const from = (currentPage - 1) * limit
+    const to = from + limit - 1
+    const totalPages = Math.ceil(totalCount / limit)
 
-            // Note: We need to join with categories and payment_modes to show names
-            const { data, error } = await supabase
+    const fetchTransactions = useCallback(async (customFrom?: number, customTo?: number) => {
+        try {
+            // Use provided range or fall back to current state from ref
+            const { currentPage: cur, limit: lim } = stateRef.current
+            const defaultFrom = (cur - 1) * lim
+            const defaultTo = defaultFrom + lim - 1
+
+            const rangeFrom = customFrom !== undefined ? customFrom : defaultFrom
+            const rangeTo = customTo !== undefined ? customTo : defaultTo
+
+            const { data, error, count } = await supabase
                 .from("transactions")
                 .select(`
                     id,
@@ -70,14 +102,13 @@ export function TransactionList() {
                     category:categories(name),
                     payment_mode:payment_modes(mode),
                     bank_account:bank_details(bank_name)
-                `)
+                `, { count: "exact" })
                 .order("transaction_date", { ascending: false })
                 .order("created_on", { ascending: false })
-                .limit(limit)
+                .range(rangeFrom, rangeTo)
 
             if (error) throw error
 
-            // Cast the relational data correctly
             const formattedData = (data || []).map(item => ({
                 ...item,
                 category: Array.isArray(item.category) ? item.category[0] : item.category,
@@ -85,18 +116,68 @@ export function TransactionList() {
                 bank_account: Array.isArray(item.bank_account) ? item.bank_account[0] : item.bank_account
             })) as Transaction[]
 
-            setTransactions(formattedData)
+            return { formattedData, count: count || 0 }
         } catch (error) {
             console.error("Error fetching transactions:", error)
             toast.error("Failed to load transactions")
-        } finally {
-            setLoading(false)
+            return null
         }
-    }, [limit, supabase])
+    }, [supabase]) // supabase is stable, so this callback is stable
+
+    const loadInitialData = useCallback(async () => {
+        setLoading(true)
+        const result = await fetchTransactions()
+        if (result) {
+            setTransactions(result.formattedData)
+            setTotalCount(result.count)
+        }
+        setLoading(false)
+    }, [fetchTransactions])
+
+    const isInitialMount = useRef(true)
 
     useEffect(() => {
-        fetchTransactions()
-    }, [fetchTransactions])
+        // Skip initial load if we have initial data from server
+        if (isInitialMount.current && initialData && initialData.length > 0) {
+            isInitialMount.current = false
+            return
+        }
+
+        loadInitialData()
+    }, [loadInitialData, refreshTrigger, initialData])
+
+    const handlePageChange = async (newPage: number) => {
+        if (newPage === currentPage || paging) return
+
+        const newFrom = (newPage - 1) * limit
+        const newTo = newFrom + limit - 1
+
+        setPaging(true)
+        const result = await fetchTransactions(newFrom, newTo)
+        if (result) {
+            setTransactions(result.formattedData)
+            setTotalCount(result.count)
+            setCurrentPage(newPage)
+        }
+        setPaging(false)
+    }
+
+    const handleLimitChange = async (newLimit: string) => {
+        const value = parseInt(newLimit)
+        if (isNaN(value)) return
+
+        setLimit(value)
+        setCurrentPage(1) // Reset to first page when limit changes
+        setPaging(true)
+
+        const newTo = value - 1 // Fetch for the first page with new limit
+        const result = await fetchTransactions(0, newTo)
+        if (result) {
+            setTransactions(result.formattedData)
+            setTotalCount(result.count)
+        }
+        setPaging(false)
+    }
 
     const handleDelete = async () => {
         if (!deleteId) return
@@ -110,7 +191,7 @@ export function TransactionList() {
             if (error) throw error
 
             toast.success("Transaction deleted")
-            fetchTransactions() // Refresh list
+            loadInitialData() // Refresh list
         } catch (error) {
             console.error("Error deleting transaction:", error)
             toast.error("Failed to delete transaction")
@@ -127,14 +208,6 @@ export function TransactionList() {
 
     return (
         <div className="space-y-6">
-
-            {/* Top Section: Add Form */}
-            <div className="space-y-2">
-                <h2 className="text-xl font-semibold tracking-tight">New Transaction</h2>
-                <TransactionForm onSuccess={fetchTransactions} />
-            </div>
-
-            {/* List Section */}
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold tracking-tight">Recent Transactions</h2>
@@ -150,11 +223,11 @@ export function TransactionList() {
                     </div>
                 </div>
 
-                <div className="rounded-xl border shadow-sm bg-white dark:bg-transparent overflow-hidden">
+                <div className="rounded-xl border shadow-sm bg-white dark:bg-transparent overflow-hidden relative">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Date</TableHead>
+                                <TableHead className="pl-6">Date</TableHead>
                                 <TableHead>Type</TableHead>
                                 <TableHead>Category</TableHead>
                                 <TableHead>Mode & Bank</TableHead>
@@ -164,13 +237,7 @@ export function TransactionList() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {loading ? (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="h-24 text-center">
-                                        Loading...
-                                    </TableCell>
-                                </TableRow>
-                            ) : filteredTransactions.length === 0 ? (
+                            {filteredTransactions.length === 0 && !loading ? (
                                 <TableRow>
                                     <TableCell colSpan={7} className="h-24 text-center">
                                         No transactions found.
@@ -179,7 +246,7 @@ export function TransactionList() {
                             ) : (
                                 filteredTransactions.map((t) => (
                                     <TableRow key={t.id}>
-                                        <TableCell className="font-medium whitespace-nowrap">
+                                        <TableCell className="pl-6 font-medium whitespace-nowrap">
                                             {format(new Date(t.transaction_date), "MMM d, yyyy")}
                                         </TableCell>
                                         <TableCell>
@@ -231,6 +298,86 @@ export function TransactionList() {
                         </TableBody>
                     </Table>
                 </div>
+
+                {/* Pagination Controls */}
+                {!loading && totalCount > 0 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4 bg-muted/20 rounded-lg border">
+                        <div className="flex items-center gap-4 order-2 sm:order-1">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground whitespace-nowrap">Rows per page</span>
+                                <Select
+                                    value={limit.toString()}
+                                    onValueChange={handleLimitChange}
+                                    disabled={paging}
+                                >
+                                    <SelectTrigger className="h-8 w-[70px]">
+                                        <SelectValue placeholder={limit.toString()} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {[10, 20, 50, 100].map((pageSize) => (
+                                            <SelectItem key={pageSize} value={pageSize.toString()}>
+                                                {pageSize}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <p className="text-sm text-muted-foreground whitespace-nowrap">
+                                Showing <span className="font-medium text-foreground">{totalCount === 0 ? 0 : from + 1}</span> to{" "}
+                                <span className="font-medium text-foreground">{Math.min(to + 1, totalCount)}</span> of{" "}
+                                <span className="font-medium text-foreground">{totalCount}</span>
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 order-1 sm:order-2">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handlePageChange(1)}
+                                disabled={currentPage === 1 || paging}
+                                className="h-8 w-8 cursor-pointer"
+                                title="First Page"
+                            >
+                                <ChevronsLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1 || paging}
+                                className="h-8 w-8 cursor-pointer"
+                                title="Previous Page"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+
+                            <div className="flex items-center justify-center px-2 h-8 text-sm font-medium border rounded-md bg-white dark:bg-transparent min-w-[100px]">
+                                Page {currentPage} of {totalPages || 1}
+                            </div>
+
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={to + 1 >= totalCount || paging}
+                                className="h-8 w-8 cursor-pointer"
+                                title="Next Page"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handlePageChange(totalPages)}
+                                disabled={to + 1 >= totalCount || paging}
+                                className="h-8 w-8 cursor-pointer"
+                                title="Last Page"
+                            >
+                                <ChevronsRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>

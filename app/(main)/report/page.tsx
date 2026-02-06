@@ -1,7 +1,8 @@
-import Link from "next/link";
+import { SilentLink } from "@/components/ui/silent-link";
 import { createClient } from "@/lib/supabase/server";
 import { CreditCard, Tag, TrendingDown } from "lucide-react";
 import { startOfMonth, endOfMonth, format } from "date-fns";
+import { TransactionList } from "@/components/transaction/transaction-list";
 
 export default async function Page() {
   const supabase = await createClient();
@@ -29,11 +30,36 @@ export default async function Page() {
 
   const totalMonthlyExpense = expenseData?.reduce((acc, curr) => acc + curr.amount, 0) || 0;
 
+  // Fetch initial transactions for the list
+  const { data: transactionsData, count: transactionsCount } = await supabase
+    .from("transactions")
+    .select(`
+        id,
+        transaction_date,
+        amount,
+        type,
+        description,
+        created_on,
+        category:categories(name),
+        payment_mode:payment_modes(mode),
+        bank_account:bank_details(bank_name)
+    `, { count: "exact" })
+    .order("transaction_date", { ascending: false })
+    .order("created_on", { ascending: false })
+    .range(0, 9);
+
+  const initialTransactions = (transactionsData || []).map((item: any) => ({
+    ...item,
+    category: Array.isArray(item.category) ? item.category[0] : item.category,
+    payment_mode: Array.isArray(item.payment_mode) ? item.payment_mode[0] : item.payment_mode,
+    bank_account: Array.isArray(item.bank_account) ? item.bank_account[0] : item.bank_account,
+  }));
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
       <div className="grid auto-rows-min gap-4 md:grid-cols-3">
         {/* Payment Modes Card */}
-        <Link
+        <SilentLink
           href="/master/payment-modes"
           className="group relative flex flex-col justify-between overflow-hidden rounded-xl bg-white p-5 shadow-sm transition-all hover:shadow-md dark:bg-muted/50 dark:shadow-none h-32 cursor-pointer border border-transparent hover:border-blue-100 dark:hover:border-blue-900/50"
         >
@@ -52,10 +78,10 @@ export default async function Page() {
               Total active methods
             </p>
           </div>
-        </Link>
+        </SilentLink>
 
         {/* Categories Card */}
-        <Link
+        <SilentLink
           href="/master/categories"
           className="group relative flex flex-col justify-between overflow-hidden rounded-xl bg-white p-5 shadow-sm transition-all hover:shadow-md dark:bg-muted/50 dark:shadow-none h-32 cursor-pointer border border-transparent hover:border-emerald-100 dark:hover:border-emerald-900/50"
         >
@@ -74,10 +100,10 @@ export default async function Page() {
               Total categories
             </p>
           </div>
-        </Link>
+        </SilentLink>
 
         {/* This Month Expense Card */}
-        <Link
+        <SilentLink
           href="/transactions"
           className="group relative flex flex-col justify-between overflow-hidden rounded-xl bg-white p-5 shadow-sm transition-all hover:shadow-md dark:bg-muted/50 dark:shadow-none h-32 cursor-pointer border border-transparent hover:border-rose-100 dark:hover:border-rose-900/50"
         >
@@ -98,9 +124,15 @@ export default async function Page() {
               Current month spending
             </p>
           </div>
-        </Link>
+        </SilentLink>
       </div>
-      <div className="min-h-[100vh] flex-1 rounded-xl bg-white dark:bg-muted/50 md:min-h-min" />
+      <div className="rounded-xl border shadow-sm bg-white dark:bg-muted/50 p-6 overflow-hidden">
+        <TransactionList
+          defaultLimit={10}
+          initialData={initialTransactions}
+          initialCount={transactionsCount || 0}
+        />
+      </div>
     </div>
   );
 }
