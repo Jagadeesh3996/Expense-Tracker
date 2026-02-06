@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState, useMemo, useCallback, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { Plus, SquarePen, Trash, CircleCheckBig, Ban, ArrowUp, ArrowDown, ChevronsUpDown, Search } from "lucide-react"
+import { Plus, SquarePen, Trash, CircleCheckBig, Ban, ArrowUp, ArrowDown, ChevronsUpDown, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -55,9 +55,9 @@ interface BankDetail {
     id: number
     bank_name: string
     holder_name: string
-    account_number?: string
-    ifsc_code?: string
-    branch?: string
+    account_number: string | null
+    ifsc_code: string | null
+    branch: string | null
     status: "active" | "inactive"
     created_on: string
     updated_on: string
@@ -70,6 +70,10 @@ type SortKey = keyof Pick<BankDetail, "bank_name" | "holder_name" | "status">
 export function BankList() {
     const [bankDetails, setBankDetails] = useState<BankDetail[]>([])
     const [loading, setLoading] = useState(true)
+    const [paging, setPaging] = useState(false)
+    const [totalCount, setTotalCount] = useState(0)
+    const [currentPage, setCurrentPage] = useState(1)
+    const [limit, setLimit] = useState(10)
     const [isOpen, setIsOpen] = useState(false)
     const [editingBank, setEditingBank] = useState<BankDetail | null>(null)
     const [formData, setFormData] = useState<{
@@ -96,29 +100,100 @@ export function BankList() {
         direction: null
     })
 
+    const stateRef = useRef({ currentPage, limit, sortConfig, searchQuery })
+    stateRef.current = { currentPage, limit, sortConfig, searchQuery }
+
     const supabase = createClient()
 
-    const fetchBankDetails = async () => {
+    const from = (currentPage - 1) * limit
+    const to = from + limit - 1
+    const totalPages = Math.ceil(totalCount / limit)
+
+    const fetchBankDetails = useCallback(async (customFrom?: number, customTo?: number) => {
         try {
-            setLoading(true)
-            const { data, error } = await supabase
+            const { currentPage: cur, limit: lim, sortConfig: sort, searchQuery: query } = stateRef.current
+            const defaultFrom = (cur - 1) * lim
+            const defaultTo = defaultFrom + lim - 1
+
+            const rangeFrom = customFrom !== undefined ? customFrom : defaultFrom
+            const rangeTo = customTo !== undefined ? customTo : defaultTo
+
+            let dbQuery = supabase
                 .from("bank_details")
-                .select("*")
-                .order("created_on", { ascending: false })
+                .select("*", { count: "exact" })
+
+            if (query) {
+                dbQuery = dbQuery.or(`bank_name.ilike.%${query}%,holder_name.ilike.%${query}%,account_number.ilike.%${query}%`)
+            }
+
+            if (sort.key && sort.direction) {
+                dbQuery = dbQuery.order(sort.key, { ascending: sort.direction === "asc" })
+            } else {
+                dbQuery = dbQuery.order("created_on", { ascending: false })
+            }
+
+            const { data, error, count } = await dbQuery.range(rangeFrom, rangeTo)
 
             if (error) throw error
-            setBankDetails(data || [])
+            return { data: data || [], count: count || 0 }
         } catch (error) {
             console.error("Error fetching bank details:", error)
             toast.error("Failed to load bank details")
-        } finally {
-            setLoading(false)
+            return null
         }
-    }
+    }, [supabase])
+
+    const loadInitialData = useCallback(async () => {
+        setLoading(true)
+        const result = await fetchBankDetails()
+        if (result) {
+            setBankDetails(result.data)
+            setTotalCount(result.count)
+        }
+        setLoading(false)
+    }, [fetchBankDetails])
 
     useEffect(() => {
-        fetchBankDetails()
-    }, [])
+        loadInitialData()
+    }, [loadInitialData])
+
+    // Fetch on search/sort changes (silent if already loaded)
+    useEffect(() => {
+        if (!loading) {
+            loadInitialData()
+        }
+    }, [sortConfig, searchQuery])
+
+    const handlePageChange = async (newPage: number) => {
+        if (newPage === currentPage || paging || newPage < 1 || newPage > totalPages) return
+
+        const newFrom = (newPage - 1) * limit
+        const newTo = newFrom + limit - 1
+
+        setPaging(true)
+        const result = await fetchBankDetails(newFrom, newTo)
+        if (result) {
+            setBankDetails(result.data)
+            setTotalCount(result.count)
+            setCurrentPage(newPage)
+        }
+        setPaging(false)
+    }
+
+    const handleLimitChange = async (newLimit: string) => {
+        const lim = parseInt(newLimit)
+        if (lim === limit || paging) return
+
+        setPaging(true)
+        const result = await fetchBankDetails(0, lim - 1)
+        if (result) {
+            setBankDetails(result.data)
+            setTotalCount(result.count)
+            setLimit(lim)
+            setCurrentPage(1)
+        }
+        setPaging(false)
+    }
 
     const handleSort = (key: SortKey) => {
         setSortConfig((current) => {
@@ -131,30 +206,6 @@ export function BankList() {
         })
     }
 
-    const sortedBankDetails = useMemo(() => {
-        let result = bankDetails;
-
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
-            result = result.filter(bank =>
-                bank.bank_name.toLowerCase().includes(query) ||
-                bank.holder_name.toLowerCase().includes(query) ||
-                (bank.account_number && bank.account_number.toLowerCase().includes(query)) ||
-                bank.status.toLowerCase().includes(query)
-            );
-        }
-
-        if (!sortConfig.key || !sortConfig.direction) return result
-
-        return [...result].sort((a, b) => {
-            const aValue = a[sortConfig.key!]
-            const bValue = b[sortConfig.key!]
-
-            if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1
-            if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1
-            return 0
-        })
-    }, [bankDetails, sortConfig, searchQuery])
 
     const renderSortIcon = (key: SortKey) => {
         if (sortConfig.key !== key) return <ChevronsUpDown className="ml-2 h-4 w-4" />
@@ -220,7 +271,7 @@ export function BankList() {
                 branch: "",
                 status: "active"
             })
-            fetchBankDetails()
+            loadInitialData()
         } catch (error: any) {
             console.error("Error saving bank details:", error)
             toast.error(error.message || "Failed to save bank details")
@@ -239,7 +290,7 @@ export function BankList() {
             if (error) throw error
 
             toast.success("Bank details deleted")
-            fetchBankDetails()
+            loadInitialData()
         } catch (error) {
             console.error("Error deleting bank details:", error)
             toast.error("Failed to delete bank details")
@@ -257,7 +308,7 @@ export function BankList() {
             if (error) throw error
 
             toast.success(`Bank marked as ${newStatus}`)
-            fetchBankDetails()
+            loadInitialData()
         } catch (error) {
             console.error("Error updating status:", error)
             toast.error("Failed to update status")
@@ -422,11 +473,11 @@ export function BankList() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[200px]">
+                            <TableHead className="pl-6 w-[200px]">
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleSort("bank_name")}
-                                    className="w-full h-8 p-0 font-bold hover:bg-transparent hover:text-current justify-start"
+                                    className="h-8 p-0 font-bold hover:bg-transparent"
                                 >
                                     Bank Name
                                     {renderSortIcon("bank_name")}
@@ -464,16 +515,16 @@ export function BankList() {
                                     Loading...
                                 </TableCell>
                             </TableRow>
-                        ) : sortedBankDetails.length === 0 ? (
+                        ) : bankDetails.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={6} className="h-24 text-center">
                                     No bank details found. Add one to get started.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            sortedBankDetails.map((bank) => (
+                            bankDetails.map((bank) => (
                                 <TableRow key={bank.id} className="h-12">
-                                    <TableCell className="font-bold pl-4">{bank.bank_name}</TableCell>
+                                    <TableCell className="pl-6 font-bold">{bank.bank_name}</TableCell>
                                     <TableCell>{bank.holder_name}</TableCell>
                                     <TableCell className="hidden md:table-cell text-muted-foreground font-mono">
                                         {bank.account_number || "-"}
@@ -578,6 +629,86 @@ export function BankList() {
                     </TableBody>
                 </Table>
             </div>
+
+            {/* Pagination Controls */}
+            {!loading && totalCount > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4 bg-muted/20 rounded-lg border mt-4">
+                    <div className="flex items-center gap-4 order-2 sm:order-1">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground whitespace-nowrap">Rows per page</span>
+                            <Select
+                                value={limit.toString()}
+                                onValueChange={handleLimitChange}
+                                disabled={paging}
+                            >
+                                <SelectTrigger className="h-8 w-[70px]">
+                                    <SelectValue placeholder={limit.toString()} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {[10, 20, 50, 100].map((pageSize) => (
+                                        <SelectItem key={pageSize} value={pageSize.toString()}>
+                                            {pageSize}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <p className="text-sm text-muted-foreground whitespace-nowrap">
+                            Showing <span className="font-medium text-foreground">{totalCount === 0 ? 0 : from + 1}</span> to{" "}
+                            <span className="font-medium text-foreground">{Math.min(to + 1, totalCount)}</span> of{" "}
+                            <span className="font-medium text-foreground">{totalCount}</span>
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 order-1 sm:order-2">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handlePageChange(1)}
+                            disabled={currentPage === 1 || paging}
+                            className="h-8 w-8 cursor-pointer"
+                            title="First Page"
+                        >
+                            <ChevronsLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1 || paging}
+                            className="h-8 w-8 cursor-pointer"
+                            title="Previous Page"
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+
+                        <div className="flex items-center justify-center px-2 h-8 text-sm font-medium border rounded-md bg-white dark:bg-transparent min-w-[100px]">
+                            Page {currentPage} of {totalPages || 1}
+                        </div>
+
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={to + 1 >= totalCount || paging}
+                            className="h-8 w-8 cursor-pointer"
+                            title="Next Page"
+                        >
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handlePageChange(totalPages)}
+                            disabled={to + 1 >= totalCount || paging}
+                            className="h-8 w-8 cursor-pointer"
+                            title="Last Page"
+                        >
+                            <ChevronsRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

@@ -2,6 +2,7 @@
 
 import { type LucideIcon } from "lucide-react"
 
+import { SilentLink } from "@/components/ui/silent-link"
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -27,10 +28,10 @@ export function NavMain({
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>
             <SidebarMenuButton tooltip={item.title} asChild>
-              <a href={item.url}>
+              <SilentLink href={item.url}>
                 {item.icon && <item.icon />}
                 <span>{item.title}</span>
-              </a>
+              </SilentLink>
             </SidebarMenuButton>
           </SidebarMenuItem>
         ))}

@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState, useMemo, useCallback, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { Plus, SquarePen, Trash, CircleCheckBig, Ban, ArrowUp, ArrowDown, ChevronsUpDown, Search } from "lucide-react"
+import { Plus, SquarePen, Trash, CircleCheckBig, Ban, ArrowUp, ArrowDown, ChevronsUpDown, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -67,6 +67,10 @@ type SortKey = keyof Pick<Category, "name" | "type" | "status">
 export function CategoryList() {
     const [categories, setCategories] = useState<Category[]>([])
     const [loading, setLoading] = useState(true)
+    const [paging, setPaging] = useState(false)
+    const [totalCount, setTotalCount] = useState(0)
+    const [currentPage, setCurrentPage] = useState(1)
+    const [limit, setLimit] = useState(10)
     const [isOpen, setIsOpen] = useState(false)
     const [editingCategory, setEditingCategory] = useState<Category | null>(null)
     const [formData, setFormData] = useState<{
@@ -80,6 +84,10 @@ export function CategoryList() {
     })
     const [processing, setProcessing] = useState(false)
 
+    // Using a ref to store current state for stable callback references
+    const stateRef = useRef({ currentPage, limit })
+    stateRef.current = { currentPage, limit }
+
     // Sorting state
     const [sortConfig, setSortConfig] = useState<{ key: SortKey | null; direction: SortDirection }>({
         key: null,
@@ -89,27 +97,80 @@ export function CategoryList() {
 
     const supabase = createClient()
 
-    const fetchCategories = async () => {
+    const from = (currentPage - 1) * limit
+    const to = from + limit - 1
+    const totalPages = Math.ceil(totalCount / limit)
+
+    const fetchCategories = useCallback(async (customFrom?: number, customTo?: number) => {
         try {
-            setLoading(true)
-            const { data, error } = await supabase
+            const { currentPage: cur, limit: lim } = stateRef.current
+            const defaultFrom = (cur - 1) * lim
+            const defaultTo = defaultFrom + lim - 1
+
+            const rangeFrom = customFrom !== undefined ? customFrom : defaultFrom
+            const rangeTo = customTo !== undefined ? customTo : defaultTo
+
+            const { data, error, count } = await supabase
                 .from("categories")
-                .select("*")
+                .select("*", { count: "exact" })
                 .order("created_on", { ascending: false })
+                .range(rangeFrom, rangeTo)
 
             if (error) throw error
-            setCategories(data || [])
+            return { data: data || [], count: count || 0 }
         } catch (error) {
             console.error("Error fetching categories:", error)
             toast.error("Failed to load categories")
-        } finally {
-            setLoading(false)
+            return null
         }
-    }
+    }, [supabase])
+
+    const loadInitialData = useCallback(async () => {
+        setLoading(true)
+        const result = await fetchCategories()
+        if (result) {
+            setCategories(result.data)
+            setTotalCount(result.count)
+        }
+        setLoading(false)
+    }, [fetchCategories])
 
     useEffect(() => {
-        fetchCategories()
-    }, [])
+        loadInitialData()
+    }, [loadInitialData])
+
+    const handlePageChange = async (newPage: number) => {
+        if (newPage === currentPage || paging || newPage < 1 || newPage > totalPages) return
+
+        const newFrom = (newPage - 1) * limit
+        const newTo = newFrom + limit - 1
+
+        setPaging(true)
+        const result = await fetchCategories(newFrom, newTo)
+        if (result) {
+            setCategories(result.data)
+            setTotalCount(result.count)
+            setCurrentPage(newPage)
+        }
+        setPaging(false)
+    }
+
+    const handleLimitChange = async (newLimit: string) => {
+        const lim = parseInt(newLimit)
+        if (lim === limit || paging) return
+
+        setPaging(true)
+        // Adjust page to stay within bounds if necessary, or just reset to 1
+        // Resetting to 1 is simpler and often preferred when limit changes
+        const result = await fetchCategories(0, lim - 1)
+        if (result) {
+            setCategories(result.data)
+            setTotalCount(result.count)
+            setLimit(lim)
+            setCurrentPage(1)
+        }
+        setPaging(false)
+    }
 
     // Sort handler
     const handleSort = (key: SortKey) => {
@@ -209,7 +270,7 @@ export function CategoryList() {
             setIsOpen(false)
             setEditingCategory(null)
             setFormData({ name: "", type: "expense", status: "active" })
-            fetchCategories()
+            loadInitialData()
         } catch (error: any) {
             console.error("Error saving category:", error)
             toast.error(error.message || "Failed to save category")
@@ -241,7 +302,7 @@ export function CategoryList() {
             if (error) throw error
 
             toast.success("Category deleted")
-            fetchCategories()
+            loadInitialData()
         } catch (error) {
             console.error("Error deleting category:", error)
             toast.error("Failed to delete category")
@@ -385,11 +446,11 @@ export function CategoryList() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-1/4">
+                            <TableHead className="pl-6 w-[250px]">
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleSort("name")}
-                                    className="w-full h-8 p-0 font-bold hover:bg-transparent hover:text-current justify-start"
+                                    className="h-8 p-0 font-bold hover:bg-transparent"
                                 >
                                     Category Name
                                     {renderSortIcon("name")}
@@ -537,6 +598,86 @@ export function CategoryList() {
                     </TableBody>
                 </Table>
             </div>
+
+            {/* Pagination Controls */}
+            {!loading && totalCount > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4 bg-muted/20 rounded-lg border mt-4">
+                    <div className="flex items-center gap-4 order-2 sm:order-1">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground whitespace-nowrap">Rows per page</span>
+                            <Select
+                                value={limit.toString()}
+                                onValueChange={handleLimitChange}
+                                disabled={paging}
+                            >
+                                <SelectTrigger className="h-8 w-[70px]">
+                                    <SelectValue placeholder={limit.toString()} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {[10, 20, 50, 100].map((pageSize) => (
+                                        <SelectItem key={pageSize} value={pageSize.toString()}>
+                                            {pageSize}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <p className="text-sm text-muted-foreground whitespace-nowrap">
+                            Showing <span className="font-medium text-foreground">{totalCount === 0 ? 0 : from + 1}</span> to{" "}
+                            <span className="font-medium text-foreground">{Math.min(to + 1, totalCount)}</span> of{" "}
+                            <span className="font-medium text-foreground">{totalCount}</span>
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 order-1 sm:order-2">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handlePageChange(1)}
+                            disabled={currentPage === 1 || paging}
+                            className="h-8 w-8 cursor-pointer"
+                            title="First Page"
+                        >
+                            <ChevronsLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1 || paging}
+                            className="h-8 w-8 cursor-pointer"
+                            title="Previous Page"
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+
+                        <div className="flex items-center justify-center px-2 h-8 text-sm font-medium border rounded-md bg-white dark:bg-transparent min-w-[100px]">
+                            Page {currentPage} of {totalPages || 1}
+                        </div>
+
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={to + 1 >= totalCount || paging}
+                            className="h-8 w-8 cursor-pointer"
+                            title="Next Page"
+                        >
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handlePageChange(totalPages)}
+                            disabled={to + 1 >= totalCount || paging}
+                            className="h-8 w-8 cursor-pointer"
+                            title="Last Page"
+                        >
+                            <ChevronsRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
