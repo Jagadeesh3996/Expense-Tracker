@@ -25,6 +25,10 @@
 - **Authentication Features**:
   - Email/password login (`app/login/actions.ts`)
   - Email/password signup (`app/signup/actions.ts`)
+  - **Google OAuth**: Fully implemented login and signup
+    - Server action: `signInWithGoogle` in `app/login/actions.ts`
+    - Callback handler: `app/auth/callback/route.ts` (exchanges code for session)
+    - Automatic account linking enabled (merges Google login with existing email accounts)
   - Form validation (email normalization, password matching, min 6 chars)
   - Session management with 2-session limit per user (database trigger)
   - Logout functionality (implemented in `nav-user.tsx`)
@@ -107,8 +111,8 @@
   - Field, Label, Collapsible
   - Dialog, Table
 - **Custom Components**:
-  - `LoginForm`: Email/password login with password visibility toggle, Google OAuth button (not implemented)
-  - `SignupForm`: Full name, email, password, confirm password with validation
+  - `LoginForm`: Email/password login with password visibility toggle, functional Google OAuth login
+  - `SignupForm`: Full name, email, password, confirm password with validation, functional Google OAuth signup
   - `ThemeProvider`: Dark/light mode support via `next-themes`
   - All components follow responsive design patterns
 
@@ -137,6 +141,7 @@
 - `login/actions.ts`: Server action for login (`login`, `signout`)
 - `signup/actions.ts`: Server action for signup with validation
 - `signup/page.tsx`: Signup page with "Varamio Technologies" branding
+- `auth/callback/route.ts`: Handler for OAuth code exchange and server-side session management
 
 ### `app/(main)/` (Main App Group)
 - `layout.tsx`: Main app layout using `DashboardWrapper`
@@ -212,7 +217,6 @@
 
 ### High Priority
 1. **Dynamic Navigation**: Centralize navigation logic
-2. **Google OAuth**: Implement Google OAuth login (buttons exist but not functional)
 
 ### Medium Priority
 4. **Profile Management**: Connect `NavUser` menu items (Account, Billing, Notifications) to real functionality
@@ -243,6 +247,5 @@
 
 ## Current Limitations
 
-1. **Navigation Data**: All navigation items are hardcoded sample data
-2. **OAuth**: Google OAuth buttons exist but not implemented
+2. **Navigation Data**: All navigation items are hardcoded sample data
 3. **User Profile**: Profile menu items are placeholders (Account, Billing, etc.)

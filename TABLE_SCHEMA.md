@@ -153,7 +153,7 @@ Stores extended user information, subscription status, and roles.
 *   **Users can view own profile**: `auth.uid() = user_id`.
 
 ### Triggers
-1.  **`on_auth_user_created`**: Automatically inserts a row into `user_profiles` when a new user signs up in `auth.users`.
+1.  **`on_auth_user_created`**: Automatically inserts a row into `user_profiles` when a new user signs up in `auth.users` (supports both Email and Google OAuth).
 2.  **`on_auth_user_verified`**: Watches `auth.users` for verification. When verified, updates `verified_on` and sets `plan_expire_on` to **3 months** from verification date.
 
 ---
