@@ -21,7 +21,7 @@
   - `/signup`: Signup page with `<SignupForm />` component
   - `/transactions`: Protected route (Main App Interface)
   - `/report`: Protected route
-  - `/master/*`: Protected master data routes
+  - `/*`: Protected master data routes
 - **Authentication Features**:
   - Email/password login (`app/login/actions.ts`)
   - Email/password signup (`app/signup/actions.ts`)
@@ -34,7 +34,7 @@
   - Logout functionality (implemented in `nav-user.tsx`)
   - Route protection via `proxy.ts` (Next.js 16 standard)
 - **Route Protection**:
-  - `proxy.ts`: URL Proxy/Middleware that protects `/transactions`, `/report`, and `/master` routes (replaces generic `middleware.ts` in Next.js 16)
+  - `proxy.ts`: URL Proxy/Middleware that protects `/transactions`, `/report`, and other main routes (replaces generic `middleware.ts` in Next.js 16)
   - Redirects unauthenticated users from protected routes to `/`
   - Redirects authenticated users from `/` or `/login` to `/transactions`
   - Redirects `/login` to `/` (login form is on home page)
@@ -48,8 +48,8 @@
     - Transactions (`/transactions`)
     - Report (`/report`)
   - `NavProjects`: Master modules:
-    - Payment Modes (`/master/payment-modes`)
-    - Categories (`/master/categories`)
+    - Payment Modes (`/payment-modes`)
+    - Categories (`/categories`)
   - `NavUser`: User profile menu (bottom of sidebar)
     - *Dynamic: Accepts user data from `app/(main)/layout.tsx`*
     - Shows user name, email, avatar
@@ -62,7 +62,7 @@
 
 ### Master Module ✅
 - **Payment Modes**:
-  - Route: `/master/payment-modes`
+  - Route: `/payment-modes`
   - Features: 
     - Advanced Data Table with Sorting and Searching
     - Status Management (Active/Inactive toggle)
@@ -70,7 +70,7 @@
     - Optimized UI with consistent alignment (Name Left, Status Center, Actions Right)
     - **Schema Update**: Added `status` column (default: 'active')
 - **Categories**:
-  - Route: `/master/categories`
+  - Route: `/categories`
   - Component: `components/categories/category-list.tsx`
   - Features:
     - Mirrored design of Payment Modes for consistency
@@ -148,9 +148,9 @@
 - `transactions/page.tsx`: Transactions page
   - Renders `TransactionList` component
 - `report/page.tsx`: Reports page with dynamic **This Month Expense** summary card linking to transactions.
-- `master/`
-  - `payment-modes/page.tsx`: Payment Modes management page
-  - `categories/page.tsx`: Categories management page
+- `payment-modes/page.tsx`: Payment Modes management page
+- `categories/page.tsx`: Categories management page
+- `bank-details/page.tsx`: Bank Details management page
 
 ### `components/`
 - **Layout Components**:

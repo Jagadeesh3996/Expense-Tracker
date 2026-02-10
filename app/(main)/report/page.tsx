@@ -60,7 +60,7 @@ export default async function Page() {
       <div className="grid auto-rows-min gap-4 md:grid-cols-3">
         {/* Payment Modes Card */}
         <SilentLink
-          href="/master/payment-modes"
+          href="/payment-modes"
           className="group relative flex flex-col justify-between overflow-hidden rounded-xl bg-white p-5 shadow-sm transition-all hover:shadow-md dark:bg-muted/50 dark:shadow-none h-32 cursor-pointer border border-transparent hover:border-blue-100 dark:hover:border-blue-900/50"
         >
           <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl transition-all group-hover:bg-blue-500/20" />
@@ -82,7 +82,7 @@ export default async function Page() {
 
         {/* Categories Card */}
         <SilentLink
-          href="/master/categories"
+          href="/categories"
           className="group relative flex flex-col justify-between overflow-hidden rounded-xl bg-white p-5 shadow-sm transition-all hover:shadow-md dark:bg-muted/50 dark:shadow-none h-32 cursor-pointer border border-transparent hover:border-emerald-100 dark:hover:border-emerald-900/50"
         >
           <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl transition-all group-hover:bg-emerald-500/20" />
