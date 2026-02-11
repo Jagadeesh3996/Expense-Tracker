@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { Plus, SquarePen, Trash, CircleCheckBig, Ban, ArrowUp, ArrowDown, ChevronsUpDown, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
+import { Plus, SquarePen, Trash, CircleCheckBig, Ban, ArrowUp, ArrowDown, ChevronsUpDown, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -450,7 +450,7 @@ export function CategoryList() {
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleSort("name")}
-                                    className="h-8 p-0 font-bold hover:bg-transparent"
+                                    className="h-8 p-0 font-bold hover:bg-transparent hover:text-current"
                                 >
                                     Category Name
                                     {renderSortIcon("name")}
@@ -483,7 +483,10 @@ export function CategoryList() {
                         {loading ? (
                             <TableRow>
                                 <TableCell colSpan={4} className="h-24 text-center">
-                                    Loading...
+                                    <div className="flex flex-col items-center justify-center gap-2">
+                                        <Loader className="h-6 w-6 animate-spin text-primary" />
+                                        <span className="text-sm text-muted-foreground font-medium">Loading categories...</span>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ) : sortedCategories.length === 0 ? (
@@ -601,7 +604,7 @@ export function CategoryList() {
 
             {/* Pagination Controls */}
             {!loading && totalCount > 0 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4 bg-muted/20 rounded-lg border mt-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4 mt-4">
                     <div className="flex items-center gap-4 order-2 sm:order-1">
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-muted-foreground whitespace-nowrap">Rows per page</span>
@@ -610,7 +613,7 @@ export function CategoryList() {
                                 onValueChange={handleLimitChange}
                                 disabled={paging}
                             >
-                                <SelectTrigger className="h-8 w-[70px]">
+                                <SelectTrigger className="h-8 w-[70px] bg-white">
                                     <SelectValue placeholder={limit.toString()} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -635,7 +638,7 @@ export function CategoryList() {
                             size="icon"
                             onClick={() => handlePageChange(1)}
                             disabled={currentPage === 1 || paging}
-                            className="h-8 w-8 cursor-pointer"
+                            className="h-8 w-8 cursor-pointer bg-white"
                             title="First Page"
                         >
                             <ChevronsLeft className="h-4 w-4" />
@@ -645,7 +648,7 @@ export function CategoryList() {
                             size="icon"
                             onClick={() => handlePageChange(currentPage - 1)}
                             disabled={currentPage === 1 || paging}
-                            className="h-8 w-8 cursor-pointer"
+                            className="h-8 w-8 cursor-pointer bg-white"
                             title="Previous Page"
                         >
                             <ChevronLeft className="h-4 w-4" />
@@ -660,7 +663,7 @@ export function CategoryList() {
                             size="icon"
                             onClick={() => handlePageChange(currentPage + 1)}
                             disabled={to + 1 >= totalCount || paging}
-                            className="h-8 w-8 cursor-pointer"
+                            className="h-8 w-8 cursor-pointer bg-white"
                             title="Next Page"
                         >
                             <ChevronRight className="h-4 w-4" />
@@ -670,7 +673,7 @@ export function CategoryList() {
                             size="icon"
                             onClick={() => handlePageChange(totalPages)}
                             disabled={to + 1 >= totalCount || paging}
-                            className="h-8 w-8 cursor-pointer"
+                            className="h-8 w-8 cursor-pointer bg-white"
                             title="Last Page"
                         >
                             <ChevronsRight className="h-4 w-4" />

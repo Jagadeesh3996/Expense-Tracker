@@ -53,13 +53,17 @@ interface TransactionListProps {
     defaultLimit?: number
     initialData?: Transaction[]
     initialCount?: number
+    showTitle?: boolean
+    showSearch?: boolean
 }
 
 export function TransactionList({
     refreshTrigger,
     defaultLimit = 10,
     initialData = [],
-    initialCount = 0
+    initialCount = 0,
+    showTitle = true,
+    showSearch = true
 }: TransactionListProps) {
     const [transactions, setTransactions] = useState<Transaction[]>(initialData)
     const [loading, setLoading] = useState(initialData.length === 0)
@@ -209,19 +213,23 @@ export function TransactionList({
     return (
         <div className="space-y-6">
             <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold tracking-tight">Recent Transactions</h2>
-                    <div className="relative w-64">
-                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search, category or bank..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-8"
-                            type="search"
-                        />
+                {(showTitle || showSearch) && (
+                    <div className="flex items-center justify-between">
+                        {showTitle && <h2 className="text-xl font-semibold tracking-tight">Recent Transactions</h2>}
+                        {showSearch && (
+                            <div className="relative w-64">
+                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search, category or bank..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="pl-8"
+                                    type="search"
+                                />
+                            </div>
+                        )}
                     </div>
-                </div>
+                )}
 
                 <div className="rounded-xl border shadow-sm bg-white dark:bg-transparent overflow-hidden relative">
                     <Table>
@@ -301,7 +309,7 @@ export function TransactionList({
 
                 {/* Pagination Controls */}
                 {!loading && totalCount > 0 && (
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4 bg-muted/20 rounded-lg border">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-4">
                         <div className="flex items-center gap-4 order-2 sm:order-1">
                             <div className="flex items-center gap-2">
                                 <span className="text-sm text-muted-foreground whitespace-nowrap">Rows per page</span>
@@ -310,7 +318,7 @@ export function TransactionList({
                                     onValueChange={handleLimitChange}
                                     disabled={paging}
                                 >
-                                    <SelectTrigger className="h-8 w-[70px]">
+                                    <SelectTrigger className="h-8 w-[70px] bg-white">
                                         <SelectValue placeholder={limit.toString()} />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -335,7 +343,7 @@ export function TransactionList({
                                 size="icon"
                                 onClick={() => handlePageChange(1)}
                                 disabled={currentPage === 1 || paging}
-                                className="h-8 w-8 cursor-pointer"
+                                className="h-8 w-8 cursor-pointer bg-white"
                                 title="First Page"
                             >
                                 <ChevronsLeft className="h-4 w-4" />
@@ -345,7 +353,7 @@ export function TransactionList({
                                 size="icon"
                                 onClick={() => handlePageChange(currentPage - 1)}
                                 disabled={currentPage === 1 || paging}
-                                className="h-8 w-8 cursor-pointer"
+                                className="h-8 w-8 cursor-pointer bg-white"
                                 title="Previous Page"
                             >
                                 <ChevronLeft className="h-4 w-4" />
@@ -360,7 +368,7 @@ export function TransactionList({
                                 size="icon"
                                 onClick={() => handlePageChange(currentPage + 1)}
                                 disabled={to + 1 >= totalCount || paging}
-                                className="h-8 w-8 cursor-pointer"
+                                className="h-8 w-8 cursor-pointer bg-white"
                                 title="Next Page"
                             >
                                 <ChevronRight className="h-4 w-4" />
@@ -370,7 +378,7 @@ export function TransactionList({
                                 size="icon"
                                 onClick={() => handlePageChange(totalPages)}
                                 disabled={to + 1 >= totalCount || paging}
-                                className="h-8 w-8 cursor-pointer"
+                                className="h-8 w-8 cursor-pointer bg-white"
                                 title="Last Page"
                             >
                                 <ChevronsRight className="h-4 w-4" />

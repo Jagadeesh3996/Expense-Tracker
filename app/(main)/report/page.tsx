@@ -126,13 +126,13 @@ export default async function Page() {
           </div>
         </SilentLink>
       </div>
-      <div className="rounded-xl border shadow-sm bg-white dark:bg-muted/50 p-6 overflow-hidden">
-        <TransactionList
-          defaultLimit={10}
-          initialData={initialTransactions}
-          initialCount={transactionsCount || 0}
-        />
-      </div>
+      <TransactionList
+        defaultLimit={10}
+        initialData={initialTransactions}
+        initialCount={transactionsCount || 0}
+        showTitle={false}
+        showSearch={false}
+      />
     </div>
   );
 }
