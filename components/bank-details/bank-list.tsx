@@ -473,7 +473,7 @@ export function BankList() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="pl-6 w-[200px]">
+                            <TableHead className="w-[200px]">
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleSort("bank_name")}

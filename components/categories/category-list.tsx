@@ -446,7 +446,7 @@ export function CategoryList() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="pl-6 w-[250px]">
+                            <TableHead className="w-[250px]">
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleSort("name")}

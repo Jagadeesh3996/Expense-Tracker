@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { HeaderActions } from "@/components/header-actions";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -7,6 +10,7 @@ import {
     SidebarInset,
     SidebarProvider,
     SidebarTrigger,
+    useSidebar,
 } from "@/components/ui/sidebar";
 import {
     Tooltip,
@@ -14,6 +18,32 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { NavigationProvider } from "@/components/providers/navigation-provider";
+
+function SidebarController() {
+    const { setOpen, isMobile } = useSidebar();
+
+    React.useEffect(() => {
+        if (isMobile) return;
+
+        const mql = window.matchMedia("(max-width: 1200px)");
+        const onChange = (e: MediaQueryListEvent | MediaQueryList) => {
+            if (e.matches) {
+                setOpen(false);
+            }
+        };
+
+        mql.addEventListener("change", onChange);
+
+        // Only run the initial check if the component mounts and it matches
+        // But since defaultOpen is false, we might not need this.
+        // However, if they refresh while > 1200 and it's closed (default), 
+        // then they open it, we don't want it to snap shut unless they RESIZE down.
+
+        return () => mql.removeEventListener("change", onChange);
+    }, [setOpen, isMobile]);
+
+    return null;
+}
 
 export function DashboardWrapper({
     children,
@@ -24,7 +54,8 @@ export function DashboardWrapper({
 }) {
     return (
         <NavigationProvider>
-            <SidebarProvider>
+            <SidebarProvider defaultOpen={false}>
+                <SidebarController />
                 <AppSidebar user={user} />
                 <SidebarInset>
                     <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">

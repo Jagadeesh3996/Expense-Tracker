@@ -255,7 +255,7 @@ export function TransactionList({
                                 filteredTransactions.map((t) => (
                                     <TableRow key={t.id}>
                                         <TableCell className="pl-6 font-medium whitespace-nowrap">
-                                            {format(new Date(t.transaction_date), "MMM d, yyyy")}
+                                            {format(new Date(t.transaction_date), "MMMM do, yyyy")}
                                         </TableCell>
                                         <TableCell>
                                             <div className={cn(
@@ -288,7 +288,7 @@ export function TransactionList({
                                             "text-right font-bold font-mono",
                                             t.type === "income" ? "text-green-600" : "text-red-600"
                                         )}>
-                                            {t.type === "income" ? "+" : "-"}{t.amount.toFixed(2)}
+                                            {t.type === "income" ? "+" : "-"}₹{t.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                         </TableCell>
                                         <TableCell>
                                             <Button

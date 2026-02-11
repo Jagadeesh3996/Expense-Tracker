@@ -410,7 +410,7 @@ export function PaymentModeList() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="pl-6 w-1/3">
+                            <TableHead className="w-1/3">
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleSort("mode")}
