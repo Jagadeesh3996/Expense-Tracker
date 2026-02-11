@@ -61,17 +61,17 @@ const data = {
   projects: [
     {
       name: "Payment Modes",
-      url: "/master/payment-modes",
+      url: "/payment-modes",
       icon: CreditCard,
     },
     {
       name: "Categories",
-      url: "/master/categories",
+      url: "/categories",
       icon: Tag,
     },
     {
       name: "Bank Details",
-      url: "/master/bank-details",
+      url: "/bank-details",
       icon: Landmark,
     },
   ],
