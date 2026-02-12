@@ -35,14 +35,22 @@ export default async function proxy(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user && request.nextUrl.pathname.startsWith('/transactions')) {
+    const isAuthPage = request.nextUrl.pathname === '/' ||
+        request.nextUrl.pathname.startsWith('/login') ||
+        request.nextUrl.pathname.startsWith('/signup') ||
+        request.nextUrl.pathname.startsWith('/forgot-password')
+
+    // If no user and trying to access protected routes, redirect to login
+    if (!user && (request.nextUrl.pathname.startsWith('/transactions') || request.nextUrl.pathname.startsWith('/reset-password'))) {
         return NextResponse.redirect(new URL('/', request.url))
     }
 
-    if (user && (request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/login'))) {
+    // If user is logged in and trying to access auth pages, redirect to dashboard
+    if (user && isAuthPage) {
         return NextResponse.redirect(new URL('/transactions', request.url))
     }
 
+    // Handle legacy /login path
     if (request.nextUrl.pathname.startsWith('/login')) {
         return NextResponse.redirect(new URL('/', request.url))
     }
