@@ -142,7 +142,7 @@ Stores extended user information, subscription status, and roles.
 | :--- | :--- | :--- | :--- | :--- |
 | `user_id` | `uuid` | **PK, FK** | | References `auth.users(id)`. 1:1 relationship. |
 | `role` | `text` | `NOT NULL` | `'user'` | Role: 'user' or 'admin'. |
-| `status` | `text` | `NOT NULL` | `'active'` | Status: 'active', 'inactive', 'suspended', 'past_due'. |
+| `status` | `text` | `NOT NULL` | `'active'` | Status: 'active', 'inactive', 'suspended', 'past_due', 'plan_expired'. |
 | `active_plan` | `text` | `NOT NULL` | `'free'` | Name of the current subscription plan. |
 | `verified_on` | `timestamptz` | | `NULL` | Timestamp of email verification. |
 | `plan_expire_on` | `timestamptz` | | `NULL` | Date when the current plan expires. |
@@ -152,9 +152,10 @@ Stores extended user information, subscription status, and roles.
 ### Policies (RLS)
 *   **Users can view own profile**: `auth.uid() = user_id`.
 
-### Triggers
+### Automation
 1.  **`on_auth_user_created`**: Automatically inserts a row into `user_profiles` when a new user signs up in `auth.users` (supports both Email and Google OAuth).
 2.  **`on_auth_user_verified`**: Watches `auth.users` for verification. When verified, updates `verified_on` and sets `plan_expire_on` to **3 months** from verification date.
+3.  **Automatic Plan Expiration (`pg_cron`)**: A scheduled job (`expire-plans`) runs hourly to call `handle_plan_expiration()`. This function updates the status to `'plan_expired'` for any user whose `plan_expire_on` timestamp is in the past and whose current status is `'active'`.
 
 ---
 
