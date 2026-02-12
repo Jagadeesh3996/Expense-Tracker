@@ -29,6 +29,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 const notifications = [
     {
@@ -163,9 +164,11 @@ export function HeaderActions({ className }: { className?: string }) {
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
-                        <DropdownMenuItem>
-                            <User className="mr-2 h-4 w-4 cursor-pointer" />
-                            <span>Profile</span>
+                        <DropdownMenuItem asChild>
+                            <Link href="/profile" className="flex w-full items-center cursor-pointer">
+                                <User className="mr-2 h-4 w-4" />
+                                <span>Profile</span>
+                            </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                             <CreditCard className="mr-2 h-4 w-4 cursor-pointer" />
