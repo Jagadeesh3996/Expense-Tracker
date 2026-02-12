@@ -63,3 +63,47 @@ export async function signout() {
     revalidatePath('/', 'layout')
     redirect('/')
 }
+
+export async function sendResetLink(prevState: any, formData: FormData) {
+    const supabase = await createClient()
+    const rawEmail = formData.get('email') as string || ''
+    const email = rawEmail.trim()
+
+    if (!email) {
+        return { error: 'Email is required' }
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=/reset-password`,
+    })
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    return { success: 'Password reset link sent to your email.' }
+}
+
+export async function updatePassword(prevState: any, formData: FormData) {
+    const supabase = await createClient()
+    const password = (formData.get('password') as string || '').trim()
+    const confirmPassword = (formData.get('confirmPassword') as string || '').trim()
+
+    if (!password) {
+        return { error: 'Password is required' }
+    }
+
+    if (password !== confirmPassword) {
+        return { error: 'Passwords do not match' }
+    }
+
+    const { error } = await supabase.auth.updateUser({
+        password: password,
+    })
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    return { success: 'Password updated successfully' }
+}
